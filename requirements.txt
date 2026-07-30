@@ -2,3 +2,4 @@ gunicorn
 fastapi
 uvicorn
 jinja2
+openai
