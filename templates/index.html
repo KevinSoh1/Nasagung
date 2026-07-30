@@ -1,25 +1,22 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FastAPI + JavaScript 연동</title>
+    <title>Hello Render</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fc;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+    </style>
 </head>
 <body>
-    <h1>API 데이터 출력</h1>
-    <div id="output">데이터를 불러오는 중...</div>
-
-    <script>
-        // 페이지가 로드되면 백엔드 API 호출
-        fetch('/api/data')
-            .then(response => response.json())
-            .then(data => {
-                // 백엔드에서 받은 {"message": "Hello Render!"} 중 message 출력
-                document.getElementById('output').innerText = data.message;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('output').innerText = '데이터 로딩 실패';
-            });
-    </script>
+    <h1>{{ message }}</h1>
+    <p>이 페이지는 FastAPI와 Jinja2 템플릿을 사용해 렌더링되었습니다.</p>
 </body>
 </html>
