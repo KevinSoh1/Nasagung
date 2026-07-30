@@ -2,23 +2,38 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>FastAPI + JavaScript 연동</title>
+    <title>FastAPI + Render 연동</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        #output { font-size: 24px; font-weight: bold; color: #2b6cb0; margin-top: 20px; }
+    </style>
 </head>
 <body>
     <h1>API 데이터 출력</h1>
     <div id="output">데이터를 불러오는 중...</div>
 
     <script>
-        // 페이지가 로드되면 백엔드 API 호출
+        // 페이지 로드 시 백엔드 API 호출
         fetch('/api/data')
-            .then(response => response.json())
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) {
+                    // 500 등 에러 발생 시
+                    throw new Error(data.message || '서버 오류가 발생했습니다.');
+                }
+                return data;
+            })
             .then(data => {
-                // 백엔드에서 받은 {"message": "Hello Render!"} 중 message 출력
-                document.getElementById('output').innerText = data.message;
+                // 백엔드의 {"message": "..."} 에서 message 출력
+                if (data && data.message !== undefined) {
+                    document.getElementById('output').innerText = data.message;
+                } else {
+                    document.getElementById('output').innerText = "응답 형식 오류 (data.message 없음)";
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('output').innerText = '데이터 로딩 실패';
+                document.getElementById('output').innerText = '오류 발생: ' + error.message;
             });
     </script>
 </body>
