@@ -2,38 +2,39 @@ import os
 import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
-# 로그 출력 설정 (Render 로그에 상세 내역 표시)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# 현재 main.py 기준 절대 경로 설정
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-templates_dir = os.path.join(BASE_DIR, "templates")
-
-templates = Jinja2Templates(directory=templates_dir)
-
+# 1. 메인 페이지 (index.html 파일 전달)
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
+async def read_root():
     try:
-        data_to_pass = "Hello Render!"
-        
-        # templates 폴더 존재 여부 체크
-        if not os.path.exists(templates_dir):
-            logger.error(f"templates 디렉토리를 찾을 수 없습니다: {templates_dir}")
-            return HTMLResponse(content="<h1>Error: templates 폴더가 없습니다.</h1>", status_code=500)
-
-        return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={"message": data_to_pass}
-        )
+        # index.html 파일 읽어서 반환
+        if os.path.exists("index.html"):
+            with open("index.html", "r", encoding="utf-8") as f:
+                return f.read()
+        elif os.path.exists("templates/index.html"):
+            with open("templates/index.html", "r", encoding="utf-8") as f:
+                return f.read()
+        else:
+            return "<h1>index.html 파일을 찾을 수 없습니다.</h1>"
     except Exception as e:
-        logger.error(f"렌더링 중 에러 발생: {str(e)}", exc_info=True)
+        logger.error(f"HTML 로딩 에러: {str(e)}")
+        return f"<h1>서버 에러: {str(e)}</h1>"
+
+# 2. JavaScript가 호출하는 API 엔드포인트
+@app.get("/api/data")
+async def get_data():
+    try:
+        # 프론트엔드로 전달할 데이터 ('message' 키 사용)
+        return {"message": "Hello Render! 백엔드 연결 성공!"}
+    except Exception as e:
+        logger.error(f"API 에러: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error_detail": str(e), "message": "서버 내부 에러가 발생했습니다."}
+            content={"message": f"백엔드 오류: {str(e)}"}
         )
