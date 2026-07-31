@@ -2,13 +2,13 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from openai import OpenAI
 import os
 from typing import Optional  # 💡 필수 모듈 임포트 추가 (스키마 검증 에러 방어)
 
 # 환경변수 로드
-load_dotenv()
+#load_dotenv()
 
 # FastAPI 생성
 app = FastAPI()
