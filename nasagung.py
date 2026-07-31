@@ -12,6 +12,10 @@ load_dotenv()
 # FastAPI 생성
 app = FastAPI()
 
+# nasagung.py와 같은 위치에 있는 templates 폴더를 지정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
 # CORS 에러 방지 설정
 app.add_middleware(
     CORSMiddleware,
