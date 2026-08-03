@@ -29,11 +29,13 @@ $success = mysqli_real_connect(
 );
 
 if (!$success) {
+    // 연결 실패 시 메시지 박스 출력 후 중단
+    $error_msg = addslashes(mysqli_connect_error());
+    echo "<script>alert('Aiven DB 연결 실패: {$error_msg}');</script>";
     die("Aiven DB 연결 실패: " . mysqli_connect_error());
 }
-
 // 한글 및 사주 한자 깨짐 방지 인코딩 설정
-mysqli_set_charset($conn, "utf8mb4");
 
-echo "Aiven DB 연결 성공!";
+mysqli_set_charset($conn, "utf8mb4");
+echo "<script>alert('Aiven DB 연결에 성공하였습니다!');</script>";
 ?>
