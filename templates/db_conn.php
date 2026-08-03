@@ -35,5 +35,5 @@ if (!$success) {
 // 한글 및 사주 한자 깨짐 방지 인코딩 설정
 mysqli_set_charset($conn, "utf8mb4");
 
-// echo "Aiven DB 연결 성공!";
+echo "Aiven DB 연결 성공!";
 ?>
