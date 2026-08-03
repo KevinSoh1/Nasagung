@@ -9,6 +9,27 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from openai import OpenAI
 
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# FastAPI 생성
+app = FastAPI()
+
+# nasagung.py와 같은 위치에 있는 templates 폴더 지정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates_dir = os.path.join(BASE_DIR, "templates")
+templates = Jinja2Templates(directory=templates_dir)
+
+# CORS 에러 방지 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Render 환경 변수 로드
 DB_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
 DB_PORT = int(os.getenv("DB_PORT", 24465))
@@ -41,27 +62,6 @@ async def test_db():
         return {"status": "success", "message": f"Aiven DB 연결 성공! (MySQL 버젼: {version})" }
     except Exception as e:
         return {"status": "error", "message": f"DB 연결 실패: {str(e)}"}
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# FastAPI 생성
-app = FastAPI()
-
-# nasagung.py와 같은 위치에 있는 templates 폴더 지정
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-templates_dir = os.path.join(BASE_DIR, "templates")
-templates = Jinja2Templates(directory=templates_dir)
-
-# CORS 에러 방지 설정
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Pydantic 모델 정의
 class SajuRequest(BaseModel):
