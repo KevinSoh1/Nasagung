@@ -10,10 +10,10 @@ from pydantic import BaseModel
 from openai import OpenAI
 
 # Render 환경 변수 로드
-DB_HOST = os.getenv("DB_HOST")
+DB_HOST = os.getenv("DB_HOST", "mysql://avnadmin:AVNS_dlJ3IOY5zdNXOk81fy6@nasagung-nasagung.g.aivencloud.com:24465/defaultdb?ssl-mode=REQUIRED")
 DB_PORT = int(os.getenv("DB_PORT", 24465))
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
+DB_USER = os.getenv("DB_USER", "avnadmin")
+DB_PASS = os.getenv("DB_PASS", "AVNS_dlJ3IOY5zdNXOk81fy6")
 DB_NAME = os.getenv("DB_NAME", "defaultdb")
 
 # DB 연결 생성 함수
