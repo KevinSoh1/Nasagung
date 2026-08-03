@@ -1,24 +1,39 @@
-﻿<?php
-// db_conn.php
-$db_host = "localhost";
-$db_user = "highteck";
-$db_pass = "high#@!%";
-$db_name = "highteck";
+<?php
+// Render Environment Variables에서 접속 정보 불러오기
+$db_host = getenv('DB_HOST');
+$db_port = getenv('DB_PORT');
+$db_user = getenv('DB_USER');
+$db_pass = getenv('DB_PASS');
+$db_name = getenv('DB_NAME');
 
-// --- [1. DB 연결] ---
-// 구형 PHP 환경과의 호환성을 위해 절차지향 방식을 권장합니다.
-$conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+// MySQLi 객체 생성
+$conn = mysqli_init();
 
-// --- [2. 연결 체크 및 에러 출력] ---
 if (!$conn) {
-    // 연결 실패 시 구체적인 에러 번호와 메시지를 출력하여 원인 파악을 돕습니다.
-    die("DB 연결 실패 (에러번호: " . mysqli_connect_errno() . "): " . mysqli_connect_error());
+    die("mysqli_init 실패");
 }
 
-// --- [3. 한글 깨짐 방지 설정] ---
-// 연결 성공 시 즉시 캐릭터셋을 utf8로 강제 지정합니다.
-if (!mysqli_set_charset($conn, "utf8")) {
-    // 캐릭터셋 설정 실패 시 (거의 없지만 보안 차원)
-    die("캐릭터셋 설정 오류: " . mysqli_error($conn));
+// 💡 Aiven MySQL 8.0 SSL 및 Public Key 보안 설정 대응
+mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+
+// DB 연결 시도 (포트 $db_port 필수 명시)
+$success = mysqli_real_connect(
+    $conn,
+    $db_host,
+    $db_user,
+    $db_pass,
+    $db_name,
+    (int)$db_port,
+    NULL,
+    MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT
+);
+
+if (!$success) {
+    die("Aiven DB 연결 실패: " . mysqli_connect_error());
 }
+
+// 한글 및 사주 한자 깨짐 방지 인코딩 설정
+mysqli_set_charset($conn, "utf8mb4");
+
+// echo "Aiven DB 연결 성공!";
 ?>
