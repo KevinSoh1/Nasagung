@@ -379,7 +379,7 @@ document.getElementById("sajuForm").addEventListener("submit", function(e) {
     else if (data.productID === "mBan") { productName = "명반"; }
 
     document.getElementById("productName").textContent = productName;
-    var apiUrl = "http://219.248.39.171:8000/nasagung/analyze";
+    var apiUrl = "https://nasagung.onrender.com/nasagung/analyze";
 
     // 버튼 클릭 즉시 화면을 차단하고 로딩 모달을 구동시킵니다.
     loadingModal.show();
