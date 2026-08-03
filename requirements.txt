@@ -3,4 +3,5 @@ uvicorn
 gunicorn
 jinja2
 openai
+pydantic
 python-multipart
