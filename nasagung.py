@@ -1,5 +1,6 @@
 import os
 import logging
+import pymysql
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -7,6 +8,39 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from openai import OpenAI
+
+# Render 환경 변수 로드
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = int(os.getenv("DB_PORT", 24465))
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME", "defaultdb")
+
+# DB 연결 생성 함수
+def get_db():
+    return pymysql.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASS,
+        database=DB_NAME,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        ssl={"ssl": {}}  # Aiven SSL 대응
+    )
+
+# 💡 DB 연결 테스트 전용 엔드포인트
+@app.get("/db-test")
+async def test_db():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT VERSION();")
+        version = cursor.fetchone()
+        conn.close()
+        return {"status": "success", "message": f"Aiven DB 연결 성공! (MySQL 버젼: {version})" }
+    except Exception as e:
+        return {"status": "error", "message": f"DB 연결 실패: {str(e)}"}
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
