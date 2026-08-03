@@ -1,38 +1,35 @@
-﻿<?php
-session_start(); // 로그인 세션 정보를 읽기 위해 최상단에 필수 (전 버전 공통)
+<?php
+// 세션이 이미 시작되지 않은 경우에만 세션 시작
+if (session_id() == '') {
+    @session_start();
+}
 
-// 초기화 (비회원은 빈칸 또는 기본값으로 출력되어 직접 데이터 입력 가능)
+// 초기화
 $user_name = "";
 $user_gender = "남성"; 
 $user_birthdate_html = ""; 
 $user_birth_time = "";
 $user_calendar = "양력";
 
-// 로그인한 사용자이면 DB에서 회원정보 조회
+// 로그인 세션 확인 및 DB 연동 (db.php가 존재하는 경우)
 if (isset($_SESSION['user_email'])) {
-	include "db_conn.php"; // DB 접속 파일
-	
-	$user_email = $_SESSION['user_email'];
-    $user_email = mysqli_real_escape_string($conn, $user_email);
-    
-    $user_type = $_SESSION['user_type'];
-    $user_type = mysqli_real_escape_string($conn, $user_type);
-    
-    $sql = "SELECT * FROM nasagung_users WHERE email = '$user_email' AND provider = '$user_type'";
-    $result = mysqli_query($conn, $sql);
-    
-    if ($result && mysqli_num_rows($result) > 0) {
-        $user = mysqli_fetch_assoc($result);
+    include_once "db_conn.php";
+       
+    if (isset($conn) && $conn) {
+        $user_email = mysqli_real_escape_string($conn, $_SESSION['user_email']);
+        $user_type = isset($_SESSION['user_type']) ? mysqli_real_escape_string($conn, $_SESSION['user_type']) : '';
         
-        // 💡 [PHP 5.2/5.3 이하 컴파일러 에러 원천 차단]
-        // 구형 파서 충돌을 막기 위해 연산식을 완전히 쪼개어 단순 값 할당으로 매핑합니다.
-        if (isset($user)) {
-            if (isset($user['name'])) {
-                $user_name = $user['name'];
-            }
-            if (isset($user['gender']) && $user['gender'] != '') {
-                $user_gender = $user['gender'];
-            }
+        $sql = "SELECT * FROM nasagung_users WHERE email = '$user_email'";
+        if ($user_type != '') {
+            $sql .= " AND provider = '$user_type'";
+        }
+        
+        $result = @mysqli_query($conn, $sql);
+        
+        if ($result && mysqli_num_rows($result) > 0) {
+            $user = mysqli_fetch_assoc($result);
+            if (isset($user['name'])) { $user_name = $user['name']; }
+            if (isset($user['gender']) && $user['gender'] != '') { $user_gender = $user['gender']; }
             
             $b_year = isset($user['birthyear']) ? $user['birthyear'] : '';
             $b_day  = isset($user['birthday']) ? $user['birthday'] : '';
@@ -40,19 +37,14 @@ if (isset($_SESSION['user_email'])) {
                 $user_birthdate_html = $b_year . "-" . $b_day;
             }
             
-            if (isset($user['birthtime'])) {
-                $user_birth_time = $user['birthtime'];
-            }
-            if (isset($user['calendarType']) && $user['calendarType'] != '') {
-                $user_calendar = $user['calendarType'];
-            }
+            if (isset($user['birthtime'])) { $user_birth_time = $user['birthtime']; }
+            if (isset($user['calendarType']) && $user['calendarType'] != '') { $user_calendar = $user['calendarType']; }
         }
     }
 }
 
-// 💡 HTML 인라인 태그 내부 숏코드 컴파일 오작동 방지용 사전 가공
-$html_name_val = htmlspecialchars($user_name);
-$html_birth_val = htmlspecialchars($user_birthdate_html);
+$html_name_val = htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8');
+$html_birth_val = htmlspecialchars($user_birthdate_html, ENT_QUOTES, 'UTF-8');
 
 $gender_hidden_val = "남성";
 $css_male_class = "gender-btn active";
@@ -64,12 +56,9 @@ if ($user_gender === 'female' || $user_gender === '여성') {
     $css_female_class = "gender-btn active";
 }
 
-$select_cal_1 = "";
-$select_cal_2 = "";
-$select_cal_3 = "";
-if ($user_calendar === '양력') { $select_cal_1 = "selected"; }
-if ($user_calendar === '음력-평달') { $select_cal_2 = "selected"; }
-if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
+$select_cal_1 = ($user_calendar === '양력') ? "selected" : "";
+$select_cal_2 = ($user_calendar === '음력-평달') ? "selected" : "";
+$select_cal_3 = ($user_calendar === '음력-윤달') ? "selected" : "";
 ?>
 <!DOCTYPE html>
 <html lang="ko">
@@ -79,22 +68,11 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
     <title>나사궁 - 당신의 운명은 이미 흐르고 있습니다</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-    	a {
-            text-decoration: none;   /* 밑줄 제거 */
-    	    color: black;            /* 기본 색상 지정 */
-  	}
-
-  	a:visited {
-    	    color: black;            /* 방문 후에도 같은 색상 유지 */
-  	}
-
-  	a:hover {
-    	    color: gray;             /* 마우스 올렸을 때 색상 */
-  	}
-
-  	a:active {
-    	    color: black;            /* 클릭 시에도 같은 색상 유지 */
-  	}
+        a { text-decoration: none; color: black; }
+        a:visited { color: black; }
+        a:hover { color: gray; }
+        a:active { color: black; }
+        
         :root {
             --bg-dark: #0a1128;
             --accent-gold: #cfb53b;
@@ -104,7 +82,6 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
 
         header {
@@ -113,42 +90,6 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: fixed; width: 100%; top: 0; z-index: 1000;
         }
-        .header-container {
-            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; white-space: nowrap; width: 100%;
-        }
-        .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
-        .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
-
-        nav .main-menu { display: flex; list-style: none; }
-        nav .main-menu li { margin: 0 15px; position: relative; }
-        nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
-        nav .main-menu li a:hover { color: var(--accent-gold); }
-
-        .submenu {
-            display: none; position: absolute; top: 100%; left: 0; background: #151e3d;
-            min-width: 150px; border-radius: 5px; padding: 10px 0; list-style: none;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-        .submenu li a { padding: 8px 20px; display: block; font-size: 0.85rem; color: var(--white) !important; }
-        .dropdown:hover .submenu { display: block; }
-
-        /* 우측 상단 버튼 영역 스타일 세팅 */
-        .auth-buttons { display: flex; align-items: center; gap: 12px; }
-        .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .btn-login:hover { background: rgba(255,255,255,0.1); }
-        .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-signup:hover { background: #b89e2b; }
-        
-        /* 마이페이지 버튼 스타일 */
-        .btn-mypage { background: transparent; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 6px 14px; border-radius: 5px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-mypage:hover { background: var(--accent-gold); color: #000; }
-
-        /* 사용자 인사 문구 및 로그아웃 버튼 */
-        .user-welcome { font-size: 0.95rem; color: var(--text-muted); margin-right: 5px; }
-        .user-welcome strong { color: var(--accent-gold); }
-        .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: var(--text-muted); padding: 6px 14px; border-radius: 5px; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
-        .btn-logout:hover { border-color: var(--white); color: var(--white); }
 
         .hero {
             min-height: 100vh;
@@ -164,14 +105,12 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
         }
 
         .hero-content { position: relative; z-index: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 40px 20px; }
-
         .intro-text { text-align: center; margin-bottom: 40px; }
         .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 3.2rem; line-height: 1.3; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
         .intro-text .highlight { color: var(--accent-gold); }
         .intro-text p { color: var(--text-muted); font-size: 1.2rem; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }
 
         .main-content-layout { display: flex; gap: 40px; align-items: flex-start; }
-
         .saju-section { flex: 1.2; background: var(--glass-bg); padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); color: #333; }
         .saju-section h2 { font-family: 'Noto Serif KR', serif; font-size: 1.8rem; margin-bottom: 30px; color: var(--bg-dark); font-weight: 700; text-align: center; }
 
@@ -190,14 +129,13 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
         .btn-submit:hover { background: #b89e2b; transform: translateY(-2px); }
 
         .quick-menu { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
-        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; width: 100%; border-radius: 15px; text-align: left; }
+        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; width: 100%; text-align: left; }
         .quick-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateX(5px); border-color: var(--accent-gold); }
         .q-icon { font-size: 2.5rem; }
         .q-text strong { display: block; font-size: 1.15rem; color: var(--white); margin-bottom: 5px; }
         .q-text span { font-size: 0.85rem; color: var(--text-muted); }
 
         .promo-card { background: linear-gradient(135deg, #1e295d, #0a1128); border: 1px solid rgba(207, 181, 59, 0.3); padding: 25px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
-        .promo-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(207,181,59,0.1) 0%, transparent 70%); }
         .promo-text strong { display: block; font-size: 1.2rem; color: var(--accent-gold); margin-bottom: 5px; }
         .promo-text p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
         .promo-gift { font-size: 3rem; }
@@ -212,7 +150,11 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
 <body>
 
 <header>
-   <?php include 'top_menu.php' ?>
+   <?php 
+   if (file_exists('top_menu.php')) {
+       include 'top_menu.php';
+   }
+   ?>
 </header>
 
 <main class="hero">
@@ -226,77 +168,72 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
             <section class="saju-section">
                 <h2>명반 분석 입력</h2>
                 <form id="sajuForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>이름</label>
+                            <input type="text" name="name" id="mainUserName" placeholder="이름을 입력하세요" value="<?php echo $html_name_val; ?>" required>
+                        </div>
 
-		    <div class="form-grid">
-		
-		        <div class="form-group">
-		            <label>이름</label>
-		            <input type="text" name="name" id="mainUserName" placeholder="이름을 입력하세요" value="<?php echo $html_name_val; ?>" required>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>성별</label>
-		
-		            <!-- 실제 전송용 hidden -->
-		            <input type="hidden" name="gender" id="genderValue" value="<?php echo $gender_hidden_val; ?>">
-		
-		            <div class="gender-group">
-		                <button type="button" class="<?php echo $css_male_class; ?>">남성</button>
-		                <button type="button" class="<?php echo $css_female_class; ?>">여성</button>
-		            </div>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>생년월일</label>
-		            <input type="date" name="birthdate" id="mainBirthDate" value="<?php echo $html_birth_val; ?>" required>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>출생시간</label>
-		            <select name="birthtime" id="mainBirthTime" required>
-		                <option value="">시간 선택</option>
-		                <?php
-		                $time_options = array(
-		                    "子" => "子시 (23:30 ~ 01:29)", "丑" => "丑시 (01:30 ~ 03:29)",
-		                    "寅" => "寅시 (03:30 ~ 05:29)", "卯" => "卯시 (05:30 ~ 07:29)",
-		                    "辰" => "辰시 (07:30 ~ 09:29)", "巳" => "巳시 (09:30 ~ 11:29)",
-		                    "午" => "午시 (11:30 ~ 13:29)", "未" => "未시 (13:30 ~ 15:29)",
-		                    "申" => "申시 (15:30 ~ 17:29)", "酉" => "酉시 (17:30 ~ 19:29)",
-		                    "戌" => "戌시 (19:30 ~ 21:29)", "亥" => "亥시 (21:30 ~ 23:29)"
-		                );
-		                foreach ($time_options as $key => $val) {
-		                    $is_sel = (trim($user_birth_time) === $key || strpos($user_birth_time, $key) !== false) ? "selected" : "";
-		                    echo "<option value='{$key}' {$is_sel}>{$val}</option>";
-		                }
-		                ?>
-		            </select>
-		        </div>
-		
-		        <div class="form-group full-width">
-		            <label>캘린더 선택</label>
-		            <select name="calendarType" id="mainCalendarType">
-		                <option value="양력" <?php echo $select_cal_1; ?>>양력 (Solar)</option>
-		                <option value="음력-평달" <?php echo $select_cal_2; ?>>음력 평달 (Lunar Regular)</option>
-		                <option value="음력-윤달" <?php echo $select_cal_3; ?>>음력 윤달 (Lunar Leap)</option>
-		            </select>
-		        </div>
-		
-		    </div>
-		    <button type="submit" id="btnSajuSubmit" name="productID" value="mBan" class="btn-submit">
-		        운명 분석하기 ➔
-		    </button>
+                        <div class="form-group">
+                            <label>성별</label>
+                            <input type="hidden" name="gender" id="genderValue" value="<?php echo $gender_hidden_val; ?>">
+                            <div class="gender-group">
+                                <button type="button" class="<?php echo $css_male_class; ?>">남성</button>
+                                <button type="button" class="<?php echo $css_female_class; ?>">여성</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>생년월일</label>
+                            <input type="date" name="birthdate" id="mainBirthDate" value="<?php echo $html_birth_val; ?>" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>출생시간</label>
+                            <select name="birthtime" id="mainBirthTime" required>
+                                <option value="">시간 선택</option>
+                                <?php
+                                $time_options = array(
+                                    "子" => "子시 (23:30 ~ 01:29)", "丑" => "丑시 (01:30 ~ 03:29)",
+                                    "寅" => "寅시 (03:30 ~ 05:29)", "卯" => "卯시 (05:30 ~ 07:29)",
+                                    "辰" => "辰시 (07:30 ~ 09:29)", "巳" => "巳시 (09:30 ~ 11:29)",
+                                    "午" => "午시 (11:30 ~ 13:29)", "未" => "未시 (13:30 ~ 15:29)",
+                                    "申" => "申시 (15:30 ~ 17:29)", "酉" => "酉시 (17:30 ~ 19:29)",
+                                    "戌" => "戌시 (19:30 ~ 21:29)", "亥" => "亥시 (21:30 ~ 23:29)"
+                                );
+                                foreach ($time_options as $key => $val) {
+                                    $is_sel = (trim($user_birth_time) === $key || strpos($user_birth_time, $key) !== false) ? "selected" : "";
+                                    echo "<option value='{$key}' {$is_sel}>{$val}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>캘린더 선택</label>
+                            <select name="calendarType" id="mainCalendarType">
+                                <option value="양력" <?php echo $select_cal_1; ?>>양력 (Solar)</option>
+                                <option value="음력-평달" <?php echo $select_cal_2; ?>>음력 평달 (Lunar Regular)</option>
+                                <option value="음력-윤달" <?php echo $select_cal_3; ?>>음력 윤달 (Lunar Leap)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnSajuSubmit" name="productID" value="mBan" class="btn-submit">
+                        운명 분석하기 ➔
+                    </button>
             </section>
 
             <aside class="quick-menu">
                 <button type="submit" id="btnTodaySubmit" name="productID" value="toDay" class="quick-item">
-        		<div class="q-icon">☀️</div>
-        		<div class="q-text">
-            			<strong>오늘의 운세</strong>
-            			<span>오늘의 흐름을 확인해보세요</span>
-        		</div>
-    		</button>
-    		
-    		</form>
+                    <div class="q-icon">☀️</div>
+                    <div class="q-text">
+                        <strong>오늘의 운세</strong>
+                        <span>오늘의 흐름을 확인해보세요</span>
+                    </div>
+                </button>
+                </form>
+
                 <a href="#" class="quick-item">
                     <div class="q-icon">🧭</div>
                     <div class="q-text">
@@ -340,7 +277,6 @@ if ($user_calendar === '음력-윤달') { $select_cal_3 = "selected"; }
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// 자바스크립트 영역 내부 주석 내 특수문자 및 기호들을 전면 청소하여 구형 파서의 오독 요소를 차단했습니다.
 var globalActiveProductID = "mBan";
 
 document.getElementById("btnSajuSubmit").addEventListener("click", function() {
@@ -379,9 +315,10 @@ document.getElementById("sajuForm").addEventListener("submit", function(e) {
     else if (data.productID === "mBan") { productName = "명반"; }
 
     document.getElementById("productName").textContent = productName;
-    var apiUrl = "https://nasagung.onrender.com/nasagung/analyze";
+    
+    // 💡 [핵심 수정] 하드코딩된 IP 주소를 상대 경로(/nasagung/analyze)로 변경
+    var apiUrl = "/nasagung/analyze";
 
-    // 버튼 클릭 즉시 화면을 차단하고 로딩 모달을 구동시킵니다.
     loadingModal.show();
 
     fetch(apiUrl, {
@@ -429,7 +366,7 @@ document.getElementById("sajuForm").addEventListener("submit", function(e) {
         document.body.style.overflow = "";
         document.body.style.paddingRight = "";
 
-        alert("서버 전송 실패 또는 주소가 올바르지 않습니다.");
+        alert("서버 분석 처리 중 오류가 발생했습니다. 나중에 다시 시도해주세요.");
     });
 });
 
