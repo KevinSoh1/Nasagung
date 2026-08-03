@@ -10,9 +10,8 @@ $user_calendar = "양력";
 
 // 로그인한 사용자이면 DB에서 회원정보 조회
 if (isset($_SESSION['user_email'])) {
-    include "db_conn.php"; // DB 접속 파일
-    
-    $user_email = $_SESSION['user_email'];
+
+	$user_email = $_SESSION['user_email'];
     $user_email = mysqli_real_escape_string($conn, $user_email);
     
     $user_type = $_SESSION['user_type'];
