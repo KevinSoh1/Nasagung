@@ -1,6 +1,6 @@
-gunicorn
 fastapi
 uvicorn
+gunicorn
 jinja2
 openai
 python-multipart
