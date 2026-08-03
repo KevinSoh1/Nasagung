@@ -1,10 +1,10 @@
 <?php
 // Render Environment Variables에서 접속 정보 불러오기
-$db_host = getenv('DB_HOST');
-$db_port = getenv('DB_PORT');
-$db_user = getenv('DB_USER');
-$db_pass = getenv('DB_PASS');
-$db_name = getenv('DB_NAME');
+$db_host = getenv('DB_HOST') ?: mysql://avnadmin:AVNS_dlJ3IOY5zdNXOk81fy6@nasagung-nasagung.g.aivencloud.com:24465/defaultdb?ssl-mode=REQUIRED;
+$db_port = getenv('DB_PORT') ?: 24465;
+$db_user = getenv('DB_USER') ?: avnadmin;
+$db_pass = getenv('DB_PASS') ?: AVNS_dlJ3IOY5zdNXOk81fy6;
+$db_name = getenv('DB_NAME') ?: defaultdb;
 
 // MySQLi 객체 생성
 $conn = mysqli_init();
