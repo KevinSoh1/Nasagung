@@ -45,13 +45,24 @@ class SajuRequest(BaseModel):
     partnerBirthtime: Optional[str] = ""
     partnerCalendarType: Optional[str] = ""
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    """메인 index.html 반환 전용 라우터"""
-    index_path = os.path.join(templates_dir, "index.html")
-    if not os.path.exists(index_path):
-        return {"message": "nasagung API 서버가 정상 구동 중입니다. (index.html 파일 없음)"}
-    return templates.TemplateResponse(request=request, name="index.html")
+    """index.html 또는 index.php 파일을 자동으로 감지하여 반환하는 라우터"""
+    # 1. templates 폴더 안에서 index.html 또는 index.php 검색
+    for target_file in ["index.html", "index.php"]:
+        file_path = os.path.join(templates_dir, target_file)
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+                
+    # 2. 최상위 루트 디렉토리에서 검색
+    for target_file in ["index.html", "index.php"]:
+        file_path = os.path.join(BASE_DIR, target_file)
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+
+    return "<h1>Error: index.html 또는 index.php 문서를 찾을 수 없습니다.</h1>"
 
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
