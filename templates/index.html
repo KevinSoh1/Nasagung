@@ -126,7 +126,7 @@
     </style>
 </head>
 <body>
-	<!-- 💡 JS로 TopMenu.html을 불러와서 div 안에 삽입 -->
+	<!-- 💡 JS로 TopMenu.html을 불러와서 div 안에 삽입 
     <script>
         fetch('TopMenu.html')
             .then(response => response.text())
@@ -134,9 +134,11 @@
                 document.getElementById('top-menu').innerHTML = data;
             });
     </script>
-<!-- 메인 메뉴가 들어갈 위치 시작-->
+	-->
+<!-- 메인 메뉴가 들어갈 위치 시작
 <div id="top-menu"></div>
-<!-- 메인 메뉴가 들어갈 위치 끝-->	
+      메인 메뉴가 들어갈 위치 끝 -->	
+{% include 'TopMenu.html' %}
 <main class="hero">
     <div class="hero-content">
         <section class="intro-text">
