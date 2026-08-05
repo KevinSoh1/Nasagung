@@ -57,13 +57,26 @@ DB_NAME = os.getenv("DB_NAME", "defaultdb")
 
 # DB 연결 생성 함수
 def get_db():
+    timeout = 10
     return pymysql.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASS,
-        database=DB_NAME,
+    #    host=DB_HOST,
+    #    port=DB_PORT,
+    #    user=DB_USER,
+    #    password=DB_PASS,
+    #    database=DB_NAME,
+    #    charset="utf8mb4",
+    #   cursorclass=pymysql.cursors.DictCursor,
+    #    ssl={"ssl": {}}  # Aiven SSL 대응
         charset="utf8mb4",
+        connect_timeout=timeout,
+        cursorclass=pymysql.cursors.DictCursor,
+        db="defaultdb",
+        host="nasagung-nasagung.g.aivencloud.com",
+        password="<redacted>",
+        read_timeout=timeout,
+        port=24465,
+        user="avnadmin",
+        write_timeout=timeout,
         cursorclass=pymysql.cursors.DictCursor,
         ssl={"ssl": {}}  # Aiven SSL 대응
     )
