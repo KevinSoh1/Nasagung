@@ -20,6 +20,14 @@ app = FastAPI()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates_dir = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_dir)
+templates.env.charset = "utf-8" # 템플릿 인코딩 강제 고정
+
+# /static 경로를 static 폴더와 매핑 (이미지, CSS, JS 파일 제공용)
+static_dir = os.path.join(BASE_DIR, "static")
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir) # static 폴더가 없으면 자동 생성
+
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # CORS 에러 방지 설정
 app.add_middleware(
