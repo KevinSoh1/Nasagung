@@ -91,22 +91,20 @@ class SajuRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    """index.html 또는 index.php 파일을 자동으로 감지하여 반환하는 라우터"""
+    """templates 폴더 안의 index.html 또는 index.php를 Jinja2 템플릿으로 감지하여 반환하는 라우터"""
+    
     # 1. templates 폴더 안에서 index.html 또는 index.php 검색
-    for target_file in ["index.html", "index.php"]:
+    for target_file in ["index.html"]:
         file_path = os.path.join(templates_dir, target_file)
         if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                return f.read()
-    return templates.TemplateResponse(request, "index.html")
-                
-    # 2. 최상위 루트 디렉토리에서 검색
-    for target_file in ["index.html", "index.php"]:
-        file_path = os.path.join(BASE_DIR, target_file)
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                return f.read()
-    return "<h1>Error: index.html 또는 index.php 문서를 찾을 수 없습니다.</h1>"
+            # 💡 f.read() 대신 TemplateResponse를 사용해야 {% include %}가 동작합니다!
+            return templates.TemplateResponse(request, target_file)
+            
+    # 2. 찾지 못했을 경우 예외 처리
+    return HTMLResponse(
+        content="<h1>Error: templates 폴더 내에서 index.html 또는 index.php 문서를 찾을 수 없습니다.</h1>", 
+        status_code=404
+    )
 
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
