@@ -106,6 +106,11 @@ async def read_root(request: Request):
         status_code=404
     )
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
     try:
