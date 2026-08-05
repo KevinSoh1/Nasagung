@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from openai import OpenAI
+from fastapi.staticfiles import StaticFiles  # Static Files 임포트
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
