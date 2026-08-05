@@ -1,6 +1,7 @@
 import os
 import logging
 import pymysql
+import urllib.parse
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -40,11 +41,19 @@ app.add_middleware(
 )
 
 # Render 환경 변수 로드
-DB_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
+RAW_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
+# 💡 만약 DB_HOST에 mysql:// URI 전체가 들어온 경우 순수 호스트만 추출하는 안전장치
+if RAW_HOST.startswith("mysql://") or RAW_HOST.startswith("postgres://"):
+    parsed = urllib.parse.urlparse(RAW_HOST)
+    DB_HOST = parsed.hostname
+else:
+    DB_HOST = RAW_HOST
+
 DB_PORT = int(os.getenv("DB_PORT", 24465))
 DB_USER = os.getenv("DB_USER", "avnadmin")
 DB_PASS = os.getenv("DB_PASS", "AVNS_dlJ3IOY5zdNXOk81fy6")
 DB_NAME = os.getenv("DB_NAME", "defaultdb")
+
 
 # DB 연결 생성 함수
 def get_db():
@@ -62,15 +71,21 @@ def get_db():
 # 💡 DB 연결 테스트 전용 엔드포인트
 @app.get("/db-test")
 async def test_db():
+    conn = None
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT VERSION();")
-        version = cursor.fetchone()
-        conn.close()
-        return {"status": "success", "message": f"Aiven DB 연결 성공! (MySQL 버젼: {version})" }
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT VERSION();")
+            version = cursor.fetchone()
+
+        versin_str = list(version.values())[0] if version else "Unknow"
+        return {"status": "success","message": f"Aiven DB 연결 성공! (MySQL 버젼: {version_str})"}
     except Exception as e:
         return {"status": "error", "message": f"DB 연결 실패: {str(e)}"}
+        
+    finally:
+        if conn:
+            conn.close()
 
 # Pydantic 모델 정의
 class SajuRequest(BaseModel):
