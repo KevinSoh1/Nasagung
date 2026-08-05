@@ -98,6 +98,7 @@ async def read_root(request: Request):
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
+    return templates.TemplateResponse(request, "index.html")
                 
     # 2. 최상위 루트 디렉토리에서 검색
     for target_file in ["index.html", "index.php"]:
@@ -105,7 +106,6 @@ async def read_root(request: Request):
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
-
     return "<h1>Error: index.html 또는 index.php 문서를 찾을 수 없습니다.</h1>"
 
 @app.post("/nasagung/analyze")
