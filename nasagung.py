@@ -77,8 +77,6 @@ def get_db():
         port=24465,
         user="avnadmin",
         write_timeout=timeout,
-        cursorclass=pymysql.cursors.DictCursor,
-        ssl={"ssl": {}}  # Aiven SSL 대응
     )
 
 # 💡 DB 연결 테스트 전용 엔드포인트
