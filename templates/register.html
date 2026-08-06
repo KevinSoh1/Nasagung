@@ -64,9 +64,9 @@
         
         <!-- 💡 에러 메시지 출력 -->
         {% if error %}
-        <div class="alert alert-danger" role="alert">
-            {{ error }}
-        </div>
+        <script>
+    		alert("{{ error }}");
+		</script>
         {% endif %}
 
         <!-- 💡 회원가입 성공 팝업 및 로그인 페이지 이동 처리 -->
