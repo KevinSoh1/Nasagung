@@ -130,24 +130,33 @@
                         <option value="巳(사)">巳시 (09-11)</option>
                         <option value="午(오)">午시 (11-13)</option>
                         <option value="未(미)">未시 (13-15)</option>
-                        <option value="申(신해)">申시 (15-17)</option>
+                        <option value="申(신)">申시 (15-17)</option>
                         <option value="酉(유)">酉시 (17-19)</option>
                         <option value="戌(술)">戌시 (19-21)</option>
-                        <option value="亥()">亥시 (21-23)</option>
+                        <option value="亥(해)">亥시 (21-23)</option>
+						<option value="모름">모름</option>
                     </select>
                 </div>
             </div>
-
-            <div class="mb-4">
-                <label class="form-label fw-bold">전화번호*</label>
-                <input type="tel" name="phone" class="form-control" placeholder="010-0000-0000" required>
-            </div>
+ 			<div class="row">
+            	<div class="col-6 mb-3">
+                	<label class="form-label fw-bold">전화번호*</label>
+                	<input type="tel" name="phone" class="form-control" placeholder="010-0000-0000" required>
+            	</div>
+				<div class="col-6 mb-3">
+                    <label class="form-label">달력 선택*</label>
+                    <select name="calendarType" class="form-select" required>
+                        <option value="양력">양력 (Solar)</option>
+                        <option value="음력-평달">음력 평달 (Lunar Regular)</option>
+                        <option value="음력-윤달">음력 윤달 (Lunar Leap)</option>
+                    </select>
+                </div>
+			</div>
 
             <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">가입하기</button>
         </form>
-
         <div class="text-center mt-3 small">
-            이미 계정이 있으신가요? <a href="/login" class="text-decoration-none fw-bold">로그인</a>
+            계정이 있으신가요? <a href="/login" class="text-decoration-none fw-bold">로그인</a>
         </div>
     </div>
 </div>
