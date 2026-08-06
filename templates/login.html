@@ -1,4 +1,4 @@
-﻿DOCTYPE html>
+﻿<DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -140,8 +140,7 @@
         
         <div class="card login-card p-4 mt-5">
             <h3 class="text-center fw-bold mb-4">나사궁 로그인</h3>
-            <?php echo $msg; ?>
-            <form action="login.php" method="POST" class="mb-4">
+            <form action="/login" method="POST" class="mb-4">
                 <label class="form-label small fw-bold">이메일</label>
                 <input type="email" name="email" class="form-control" placeholder="example@mail.com" required>
                 
@@ -157,7 +156,7 @@
             <a href="<?php echo $kakao_url; ?>" class="btn-social btn-kakao">카카오로 시작하기</a>
             
             <div class="text-center mt-4 small">
-                계정이 없으신가요? <a href="register.php" class="text-decoration-none text-primary fw-bold">회원가입</a>
+                계정이 없으신가요? <a href="register.html" class="text-decoration-none text-primary fw-bold">회원가입</a>
             </div>
         </div>
     </div>
