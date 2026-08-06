@@ -5,23 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나사궁 - 당신의 운명은 이미 흐르고 있습니다</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-    	a {
-            text-decoration: none;   /* 밑줄 제거 */
-            color: black;            /* 기본 색상 지정 */
-  	}
-
-  	a:visited {
-            color: black;            /* 방문 후에도 같은 색상 유지 */
-  	}
-
-  	a:hover {
-            color: gray;             /* 마우스 올렸을 때 색상 */
-  	}
-
-  	a:active {
-            color: black;            /* 클릭 시에도 같은 색상 유지 */
-  	}
+   <style>
+    	a { text-decoration: none; color: black; }
+  	a:visited { color: black; }
+  	a:hover { color: gray; }
+  	a:active { color: black; }
         :root {
             --bg-dark: #0a1128;
             --accent-gold: #cfb53b;
@@ -29,96 +17,38 @@
             --text-muted: #bdc3c7;
             --glass-bg: rgba(255, 255, 255, 0.92);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { background-color: #f4f7f6; padding-top: 50px; }
-        
-        /* register.php의 .reg-card 규격과 완전 일치하도록 동기화 */
-        .login-card {
-            max-width: 450px;     /* 가독성을 위해 로그인 화면에 최적화된 너비 유지 */
-            width: 100%;
-            margin: 0 auto;       /* 가로 정중앙 정렬 */
-            padding: 2.5rem 2rem;
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            background: #fff;
-            color: #333 !important; /* 부트스트랩 흰 글씨 오버라이딩 차단 */
-        }
-
-        /* 소셜 간편 로그인 버튼 스타일 정의 */
-        .btn-naver { background: #03C75A; color: white !important; }
-        .btn-kakao { background: #FEE500; color: #3c1e1e !important; }
-        .btn-social { 
-            height: 45px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold; 
-            text-decoration: none; 
-            border-radius: 8px; 
-            margin-bottom: 10px; 
-            font-size: 0.9rem; 
-        }
-
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
+	.reg-card { max-width: 550px; margin: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); color: #333; }
         header {
-            background: rgba(10, 17, 40, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 17, 40, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: fixed; width: 100%; top: 0; z-index: 1000;
         }
-        .header-container {
-            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .header-container { max-width: 1200px; margin: 0 auto; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
         .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
-
         nav .main-menu { display: flex; list-style: none; }
         nav .main-menu li { margin: 0 15px; position: relative; }
         nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
         nav .main-menu li a:hover { color: var(--accent-gold); }
-
         .submenu {
             display: none; position: absolute; top: 100%; left: 0; background: #151e3d;
-            min-width: 150px; border-radius: 5px; padding: 10px 0; list-style: none;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            min-width: 150px; border-radius: 5px; padding: 10px 0; list-style: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         .submenu li a { padding: 8px 20px; display: block; font-size: 0.85rem; color: var(--white) !important; }
         .dropdown:hover .submenu { display: block; }
-
         .auth-buttons { display: flex; }
         .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; margin-right: 10px; cursor: pointer; }
         .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        /* register.php와 동일한 배경 설정 매칭 */
         .hero {
-            min-height: 100vh; /* height를 min-height로 변경 */
-            background: linear-gradient(rgba(10, 17, 40, 0.5), rgba(10, 17, 40, 0.5)), 
-                        url('/static/images/background.png') center/cover no-repeat;
-            background-attachment: fixed; /* 배경 왜곡 방지 고정 */
-            position: relative; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            padding-top: 140px; 
-            padding-bottom: 60px;
+            min-height: 100vh; background: linear-gradient(rgba(10, 17, 40, 0.5), rgba(10, 17, 40, 0.5)), url('images/background.png') center/cover no-repeat;
+            background-attachment: fixed; position: relative; display: flex; align-items: center; justify-content: center; padding-top: 140px; padding-bottom: 60px;
         }
-
         .hero-content { position: relative; z-index: 1; max-width: 1100px; width: 100%; margin: 0 auto; padding: 40px 20px; }
-
-        /* 문구 컴포넌트 속성 동기화 (폰트 스케일 고정) */
         .intro-text { text-align: center; margin-bottom: 40px; }
         .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 3.2rem; line-height: 1.3; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
         .intro-text .highlight { color: var(--accent-gold); }
         .intro-text p { color: var(--text-muted); font-size: 1.2rem; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }
-        
-        .input-group { margin-bottom: 18px; }
-        .input-group input { 
-            width: 100%; padding: 14px 18px; border: 1px solid #d1ccc0; 
-            border-radius: 4px; font-size: 1rem; background-color: #f7f3eb;
-        }
     </style>
 </head>
 <body>
