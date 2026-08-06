@@ -122,6 +122,7 @@
                 <div class="col-6 mb-3">
                     <label class="form-label fw-bold">태어난 시간*</label>
                     <select name="birthtime" class="form-select" required>
+						<option>태어난 시간 선택</option>
                         <option value="子(자)">子시 (23-01)</option>
                         <option value="丑(축)">丑시 (01-03)</option>
                         <option value="寅(인)">寅시 (03-05)</option>
@@ -144,9 +145,10 @@
                 	<input type="tel" name="phone" class="form-control" placeholder="010-0000-0000" required>
             	</div>
 				<div class="col-6 mb-3">
-                    <label class="form-label">달력 선택*</label>
+                    <label class="form-label fw-bold">달력 선택*</label>
                     <select name="calendarType" class="form-select" required>
-                        <option value="양력">양력 (Solar)</option>
+                        <option>달력 선택</option>
+						<option value="양력">양력 (Solar)</option>
                         <option value="음력-평달">음력 평달 (Lunar Regular)</option>
                         <option value="음력-윤달">음력 윤달 (Lunar Leap)</option>
                     </select>
