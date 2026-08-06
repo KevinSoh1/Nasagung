@@ -1,9 +1,13 @@
 import os
+import re
+import time
+import uuid
+import hashlib
 import logging
 import pymysql
 import urllib.parse
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request, Form, Depends
+from fastapi import FastAPI, HTTPException, Request, Form, Depends,UploadFile,File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
@@ -69,7 +73,7 @@ def get_db():
         ssl={"ssl": {}}  # Aiven SSL 대응
   )
 
-# 💡 DB 연결 테스트 전용 엔드포인트
+# DB 연결 테스트 전용 엔드포인트
 @app.get("/db-test")
 async def test_db():
     conn = None
@@ -102,6 +106,11 @@ async def test_db():
         if conn:
             conn.close()
 
+# 업로드 이미지 저장 폴더 지정 (static/uploads)
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+    
 # Pydantic 모델 정의
 class SajuRequest(BaseModel):
     name: str
@@ -192,7 +201,96 @@ async def logout():
     response.delete_cookie(key="user_email") # 쿠키 삭제
     return response
 
+# ==========================================
+# 4. 회원가입 페이지 화면 띄우기 (GET)
+# ==========================================
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse(request, "register.html")
 
+# ==========================================
+# 5. 회원가입 폼 제출 처리 (POST)
+# ==========================================
+@app.post("/register", response_class=HTMLResponse)
+async def register_submit(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    name: str = Form(...),
+    gender: str = Form(...),
+    birthyear: int = Form(...),
+    birthday: str = Form(...),
+    birthtime: str = Form(...),
+    phone: str = Form(...),
+    profile_img: UploadFile = File(None), # 업로드 파일 (선택)
+    db=Depends(get_db)
+):
+    # --- 비밀번호 유효성 검사 (영문, 숫자, 특수문자 포함 5자 이상) ---
+    pw_pattern = r'^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+]).{5,}$'
+    if not re.match(pw_pattern, password):
+        return templates.TemplateResponse(
+            request, "register.html", 
+            {"error": "비밀번호는 영문, 숫자, 특수문자 포함 5자 이상이어야 합니다."}
+        )
+
+    # --- 프로필 사진 처리 ---
+    saved_filename = ""
+    
+    # 1. 사용자가 파일 업로드 시 파일 저장
+    if profile_img and profile_img.filename:
+        file_ext = os.path.splitext(profile_img.filename)[1]
+        saved_filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, saved_filename)
+        
+        contents = await profile_img.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+            
+    # 2. 미업로드 시 출생연도 기준 12지신 자동 할당
+    else:
+        zodiac_icons = {
+            0: "monkey.png",  1: "rooster.png", 2: "dog.png",    3: "pig.png",
+            4: "rat.png",      5: "ox.png",       6: "tiger.png",  7: "rabbit.png",
+            8: "dragon.png",   9: "snake.png",   10: "horse.png", 11: "sheep.png"
+        }
+        remainder = birthyear % 12
+        saved_filename = zodiac_icons[remainder]
+
+    # --- 비밀번호 해싱 (MD5) ---
+    hashed_pw = hashlib.md5(password.encode('utf-8')).hexdigest()
+
+    try:
+        with db.cursor() as cursor:
+            # 1. 중복 이메일 체크
+            check_sql = "SELECT id FROM nasagung_users WHERE email=%s AND provider='local'"
+            cursor.execute(check_sql, (email,))
+            if cursor.fetchone():
+                return templates.TemplateResponse(
+                    request, "register.html", 
+                    {"error": "이미 등록된 이메일입니다."}
+                )
+
+            # 2. DB 저장
+            insert_sql = """
+                INSERT INTO nasagung_users 
+                (email, password, name, gender, birthyear, birthday, birthtime, phone, profile_img, provider) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'local')
+            """
+            cursor.execute(insert_sql, (
+                email, hashed_pw, name, gender, birthyear, birthday, birthtime, phone, saved_filename
+            ))
+            db.commit() # 변경사항 DB 반영
+
+        return templates.TemplateResponse(
+            request, "register.html", 
+            {"success": True}
+        )
+
+    except Exception as e:
+        return templates.TemplateResponse(
+            request, "register.html", 
+            {"error": f"가입 중 오류가 발생했습니다: {str(e)}"}
+        )
 
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
