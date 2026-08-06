@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 나사궁</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --accent-gold: #cfb53b;
+            --white: #ffffff;
+        }
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background: var(--bg-dark); 
+            color: #333;
+            min-height: 100vh;
+            padding-top: 120px;
+            padding-bottom: 60px;
+        }
+        .reg-card { 
+            max-width: 550px; 
+            margin: auto; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+{% include 'TopMenu.html' %}
+
+<div class="container">
+    <div class="card reg-card p-4">
+        <h3 class="text-center fw-bold mb-4">나사궁 회원가입</h3>
+        
+        <!-- 💡 에러 메시지 출력 -->
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- 💡 성공 메시지 출력 -->
+        {% if success %}
+        <div class="alert alert-success" role="alert">
+            가입이 완료 되었습니다! <a href="/login" class="alert-link">로그인하기</a>
+        </div>
+        {% endif %}
+        
+        <!-- 💡 파일 업로드를 위해 enctype="multipart/form-data" 필수 -->
+        <form action="/register" method="POST" enctype="multipart/form-data">
+            <div class="mb-3 text-center">
+                <label class="form-label d-block fw-bold text-primary">프로필 사진 (선택)</label>
+                <input type="file" name="profile_img" class="form-control" accept="image/*">
+                <small class="text-muted d-block mt-1">사진 미등록 시 출생연도 띠별 캐릭터가 자동 등록됩니다.</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">이메일*</label>
+                <input type="email" name="email" class="form-control" placeholder="example@mail.com" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">비밀번호*</label>
+                <input type="password" name="password" class="form-control" placeholder="영문, 숫자, 특수문자 포함 5자 이상" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">이름*</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">성별*</label>
+                    <select name="gender" class="form-select" required>
+                        <option value="male">남성</option>
+                        <option value="female">여성</option>
+                    </select>
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">출생연도*</label>
+                    <input type="number" name="birthyear" class="form-control" placeholder="예: 1990" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">생일* (MM-DD)</label>
+                    <input type="text" name="birthday" class="form-control" placeholder="05-20" required>
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">태어난 시간*</label>
+                    <select name="birthtime" class="form-select" required>
+                        <option value="子(자)">子시 (23-01)</option>
+                        <option value="丑(축)">丑시 (01-03)</option>
+                        <option value="寅(인)">寅시 (03-05)</option>
+                        <option value="卯(묘)">卯시 (05-07)</option>
+                        <option value="辰(진)">辰시 (07-09)</option>
+                        <option value="巳(사)">巳시 (09-11)</option>
+                        <option value="午(오)">午시 (11-13)</option>
+                        <option value="未(미)">未시 (13-15)</option>
+                        <option value="申(신해)">申시 (15-17)</option>
+                        <option value="酉(유)">酉시 (17-19)</option>
+                        <option value="戌(술)">戌시 (19-21)</option>
+                        <option value="亥()">亥시 (21-23)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">전화번호*</label>
+                <input type="tel" name="phone" class="form-control" placeholder="010-0000-0000" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">가입하기</button>
+        </form>
+
+        <div class="text-center mt-3 small">
+            이미 계정이 있으신가요? <a href="/login" class="text-decoration-none fw-bold">로그인</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
