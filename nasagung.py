@@ -76,15 +76,29 @@ async def test_db():
     try:
         conn = get_db()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT VERSION();")
-            version = cursor.fetchone()
+            # 1. AS ver 구문으로 결과 컬럼명을 'ver'로 명확히 지정
+            cursor.execute("SELECT VERSION() AS ver;")
+            result = cursor.fetchone()
+            
+        # 2. 안전하게 버전 정보 추출
+        if result and "ver" in result:
+            db_version = result["ver"]
+        else:
+            db_version = "알 수 없음"
 
-        versin_str = list(version.values())[0] if version else "Unknow"
-        return {"status": "success","message": f"Aiven DB 연결 성공! (MySQL 버젼: {version_str})"}
+        return {
+            "status": "success", 
+            "message": f"Aiven DB 연결 성공! (MySQL 버젼: {db_version})"
+        }
+        
     except Exception as e:
-        return {"status": "error", "message": f"DB 연결 실패: {str(e)}"}
+        return {
+            "status": "error", 
+            "message": f"DB 연결 실패: {str(e)}"
+        }
         
     finally:
+        # 3. DB 커넥션 자원 반납
         if conn:
             conn.close()
 
