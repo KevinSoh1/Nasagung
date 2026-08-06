@@ -3,8 +3,8 @@ import logging
 import pymysql
 import urllib.parse
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request, Form, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -136,9 +136,62 @@ async def read_root(request: Request):
         status_code=404
     )
 
+# ==========================================
+# 1. 로그인 페이지 화면 띄우기 (GET)
+# ==========================================
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse(request, "login.html")
+# ==========================================
+# 2. 로그인 폼 제출 처리 (POST)
+# ==========================================
+@app.post("/login", response_class=HTMLResponse)
+async def login_submit(
+    request: Request,
+    email: str = Form(...),       # login.html의 name="email" 값을 받아옴
+    password: str = Form(...),    # login.html의 name="password" 값을 받아옴
+    db=Depends(get_db)
+):
+    try:
+        with db.cursor() as cursor:
+            # 💡 1. DB에서 해당 이메일의 유저 조회
+            # (테이블명이 nasagung_users이고 컬럼이 email, password라고 가정)
+            sql = "SELECT * FROM nasagung_users WHERE email = %s"
+            cursor.execute(sql, (email,))
+            user = cursor.fetchone()
+
+        # 💡 2. 유저가 없거나 비밀번호가 틀린 경우
+        # (단순 비교 예시, 실제 서비스 운영 시 bcrypt 등 암호화 해시 비교 권장)
+        if not user or user["password"] != password:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {"error": "이메일 또는 비밀번호가 올바르지 않습니다."}
+            )
+
+        # 💡 3. 로그인 성공 시 메인 페이지로 이동 및 로그인 쿠키 설정
+        response = RedirectResponse(url="/", status_code=303)
+        # 브라우저 쿠키에 user_id 저장 (HTTP-Only 보안 설정)
+        response.set_cookie(key="user_email", value=user["email"], httponly=True)
+        return response
+
+    except Exception as e:
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {"error": f"로그인 처리 중 오류 발생: {str(e)}"}
+        )
+
+
+# ==========================================
+# 3. 로그아웃 처리 (POST/GET)
+# ==========================================
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie(key="user_email") # 쿠키 삭제
+    return response
+
 
 
 @app.post("/nasagung/analyze")
