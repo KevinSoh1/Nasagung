@@ -69,12 +69,13 @@
         </div>
         {% endif %}
 
-        <!-- 💡 성공 메시지 출력 -->
-        {% if success %}
-       <div class="alert alert-success" role="alert">
-    		가입이 완료 되었습니다! <a href="/login" class="alert-link">로그인하기</a>
-		</div>
-        {% endif %}
+        <!-- 💡 회원가입 성공 팝업 및 로그인 페이지 이동 처리 -->
+    {% if success %}
+    <script>
+        alert("회원가입이 성공적으로 완료되었습니다!");
+        window.location.href = "/login";
+    </script>
+    {% endif %}
         
         <!-- 💡 파일 업로드를 위해 enctype="multipart/form-data" 필수 -->
         <form action="/register" method="POST" enctype="multipart/form-data">
