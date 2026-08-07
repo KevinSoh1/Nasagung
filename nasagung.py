@@ -51,6 +51,7 @@ NAVER_CLIENT_SECRET = os.getenv('NAVER_CLIENT_SECRET', 'KMrCXfSWK0')  # 네이�
 NAVER_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=naver'
 
 KAKAO_CLIENT_ID = '3df972d36e9c33e81dc306fa0829de88'
+KAKAO_CLIENT_SECRET = 'OSyIzzbnv0QK5OxoTDRUlNTt62Cu2Bab'
 KAKAO_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=kakao'
 
 
@@ -250,6 +251,7 @@ async def social_callback(
             body = {
                 "grant_type": "authorization_code",
                 "client_id": KAKAO_CLIENT_ID,
+                "client_secret": KAKAO_CLIENT_SECRET,
                 "redirect_uri": KAKAO_REDIRECT_URI,
                 "code": code
             }
