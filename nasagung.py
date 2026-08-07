@@ -219,6 +219,11 @@ async def social_callback(
 
     email = None
     name = "사용자"
+    gender = ""
+    birthyear = None
+    birthday = ""
+    phone = ""
+    social_id = ""
 
     try:
         # ------------------------------------
@@ -238,10 +243,23 @@ async def social_callback(
             ).json()
 
             if profile_res.get("resultcode") == "00":
-                user_info = profile_res.get("response", {})
-                email = user_info.get("email")
-                name = user_info.get("name", "네이버 사용자")
-
+                u = profile_res.get("response", {})
+                social_id = u.get("id", "")
+                email = u.get("email")
+                name = u.get("name") or u.get("nickname", "네이버 사용자")
+                
+                # 성별 (M -> male, F -> female)
+                g_raw = u.get("gender", "")
+                if g_raw == "M": gender = "male"
+                elif g_raw == "F": gender = "female"
+                
+                # 출생연도 & 생일 (MM-DD)
+                birthyear = int(u.get("birthyear")) if u.get("birthyear") else None
+                birthday = u.get("birthday", "")
+                
+                # 전화번호
+                phone = u.get("mobile", "")
+            
         # ------------------------------------
         # 카카오 소셜 로그인
         # ------------------------------------
@@ -266,6 +284,33 @@ async def social_callback(
                 headers={"Authorization": f"Bearer {access_token}"}
             ).json()
 
+            social_id = str(profile_res.get("id", ""))
+            kakao_account = profile_res.get("kakao_account", {})
+            profile_info = kakao_account.get("profile", {})
+
+            email = kakao_account.get("email")
+            # 이름 우선 사용, 없으면 닉네임 사용
+            name = kakao_account.get("name") or profile_info.get("nickname", "카카오 사용자")
+
+            # 성별 (male / female)
+            gender = kakao_account.get("gender", "")
+
+            # 출생연도
+            by_raw = kakao_account.get("birthyear")
+            birthyear = int(by_raw) if by_raw else None
+
+            # 생일 (MMDD -> MM-DD 포맷팅)
+            bd_raw = kakao_account.get("birthday", "")
+            if len(bd_raw) == 4:
+                birthday = f"{bd_raw[:2]}-{bd_raw[2:]}"
+            else:
+                birthday = bd_raw
+
+            # 전화번호 (+82 10-1234-5678 -> 010-1234-5678 포맷팅)
+            ph_raw = kakao_account.get("phone_number", "")
+            if ph_raw:
+                phone = ph_raw.replace("+82 ", "0").replace("+82-", "0")
+                
             kakao_account = profile_res.get("kakao_account", {})
             email = kakao_account.get("email")
             name = kakao_account.get("profile", {}).get("nickname", "카카오 사용자")
@@ -281,13 +326,24 @@ async def social_callback(
             user = cursor.fetchone()
 
             if not user:
-                # 미가입자인 경우 자동 가입 처리 (기본 가입 정보 INSERT)
+                profile_img = "rat.png"
+                if birthyear:
+                    zodiac_icons = {
+                        0: "monkey.png", 1: "rooster.png", 2: "dog.png", 3: "pig.png",
+                        4: "rat.png", 5: "ox.png", 6: "tiger.png", 7: "rabbit.png",
+                        8: "dragon.png", 9: "snake.png", 10: "horse.png", 11: "sheep.png"
+                    }
+                    profile_img = zodiac_icons[birthyear % 12]
+                    
+               # 신규 사용자 자동 가입 (SNS 정보 포함)
                 insert_sql = """
                     INSERT INTO nasagung_users 
-                    (email, password, name, provider, profile_img) 
-                    VALUES (%s, '', %s, %s, 'rat.png')
+                    (email, password, name, gender, birthyear, birthday, phone, provider, social_id, profile_img) 
+                    VALUES (%s, '', %s, %s, %s, %s, %s, %s, %s, %s)
                 """
-                cursor.execute(insert_sql, (email, name, type))
+                cursor.execute(insert_sql, (
+                    email, name, gender, birthyear, birthday, phone, type, social_id, profile_img
+                ))
                 db.commit()
 
         # 로그인 처리 (쿠키 생성 후 메인 이동)
