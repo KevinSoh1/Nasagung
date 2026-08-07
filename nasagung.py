@@ -338,7 +338,7 @@ async def social_callback(
                # 신규 사용자 자동 가입 (SNS 정보 포함)
                 insert_sql = """
                     INSERT INTO nasagung_users 
-                    (email, password, name, gender, birthyear, birthday, phone, provider, social_id, profile_img) 
+                    (email, password, name, gender, birthyear, birthday, phone, provider, sns_id, profile_img) 
                     VALUES (%s, '', %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(insert_sql, (
