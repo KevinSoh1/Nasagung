@@ -44,6 +44,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 소셜 로그인 API 상수 정의
+NAVER_CLIENT_ID = 'UF79Ckgq9nduIA5W44JW'
+NAVER_CLIENT_SECRET = os.getenv('NAVER_CLIENT_SECRET', 'YOUR_NAVER_CLIENT_SECRET')  # 네이버 개발자 센터 Secret 값 입력
+NAVER_REDIRECT_URI = 'https://highteck.kr/nasagung/callback?type=naver'
+
+KAKAO_CLIENT_ID = '3df972d36e9c33e81dc306fa0829de88'
+KAKAO_REDIRECT_URI = 'https://highteck.kr/nasagung/callback?type=kakao'
+
+
 # Render 환경 변수 로드
 RAW_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
 # 💡 만약 DB_HOST에 mysql:// URI 전체가 들어온 경우 순수 호스트만 추출하는 안전장치
@@ -162,16 +171,17 @@ async def login_submit(
     db=Depends(get_db)
 ):
     try:
+        # 일반 로그인 비밀번호 해시 처리
+        hashed_pw = hashlib.md5(password.encode('utf-8')).hexdigest()
+        
         with db.cursor() as cursor:
-            # 💡 1. DB에서 해당 이메일의 유저 조회
-            # (테이블명이 nasagung_users이고 컬럼이 email, password라고 가정)
-            sql = "SELECT * FROM nasagung_users WHERE email = %s"
+            sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
             cursor.execute(sql, (email,))
             user = cursor.fetchone()
 
         # 💡 2. 유저가 없거나 비밀번호가 틀린 경우
         # (단순 비교 예시, 실제 서비스 운영 시 bcrypt 등 암호화 해시 비교 권장)
-        if not user or user["password"] != password:
+        if not user or user["password"] != hashed_pw:
             return templates.TemplateResponse(
                 request,
                 "login.html",
@@ -191,6 +201,100 @@ async def login_submit(
             {"error": f"로그인 처리 중 오류 발생: {str(e)}"}
         )
 
+# ==========================================
+# 2-1. 소셜 로그인 콜백 처리 (네이버 / 카카오)
+# ==========================================
+@app.get("/nasagung/callback")
+async def social_callback(
+    request: Request,
+    type: str = "",
+    code: str = "",
+    state: Optional[str] = "",
+    db=Depends(get_db)
+):
+    if not code or not type:
+        return templates.TemplateResponse(request, "login.html", {"error": "소셜 인증 정보가 유효하지 않습니다."})
+
+    email = None
+    name = "사용자"
+
+    try:
+        # ------------------------------------
+        # 네이버 소셜 로그인
+        # ------------------------------------
+        if type == "naver":
+            token_url = f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={NAVER_CLIENT_ID}&client_secret={NAVER_CLIENT_SECRET}&code={code}&state={state}"
+            token_res = requests.get(token_url).json()
+            access_token = token_res.get("access_token")
+
+            if not access_token:
+                return templates.TemplateResponse(request, "login.html", {"error": "네이버 토큰 발급에 실패했습니다."})
+
+            profile_res = requests.get(
+                "https://openapi.naver.com/v1/nid/me",
+                headers={"Authorization": f"Bearer {access_token}"}
+            ).json()
+
+            if profile_res.get("resultcode") == "00":
+                user_info = profile_res.get("response", {})
+                email = user_info.get("email")
+                name = user_info.get("name", "네이버 사용자")
+
+        # ------------------------------------
+        # 카카오 소셜 로그인
+        # ------------------------------------
+        elif type == "kakao":
+            token_url = "https://kauth.kakao.com/oauth/token"
+            headers = {"Content-Type": "application/x-www-form-urlencoded;charset=utf-8"}
+            body = {
+                "grant_type": "authorization_code",
+                "client_id": KAKAO_CLIENT_ID,
+                "redirect_uri": KAKAO_REDIRECT_URI,
+                "code": code
+            }
+            token_res = requests.post(token_url, headers=headers, data=body).json()
+            access_token = token_res.get("access_token")
+
+            if not access_token:
+                return templates.TemplateResponse(request, "login.html", {"error": "카카오 토큰 발급에 실패했습니다."})
+
+            profile_res = requests.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={"Authorization": f"Bearer {access_token}"}
+            ).json()
+
+            kakao_account = profile_res.get("kakao_account", {})
+            email = kakao_account.get("email")
+            name = kakao_account.get("profile", {}).get("nickname", "카카오 사용자")
+
+        if not email:
+            return templates.TemplateResponse(request, "login.html", {"error": "소셜 계정에서 이메일 정보를 받아올 수 없습니다."})
+
+        # ------------------------------------
+        # DB 조회 및 미가입 시 자동 가입 (INSERT)
+        # ------------------------------------
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+
+            if not user:
+                # 미가입자인 경우 자동 가입 처리 (기본 가입 정보 INSERT)
+                insert_sql = """
+                    INSERT INTO nasagung_users 
+                    (email, password, name, provider, profile_img) 
+                    VALUES (%s, '', %s, %s, 'rat.png')
+                """
+                cursor.execute(insert_sql, (email, name, type))
+                db.commit()
+
+        # 로그인 처리 (쿠키 생성 후 메인 이동)
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(key="user_email", value=email, httponly=True)
+        return response
+
+    except Exception as e:
+        logger.error(f"Social login callback error: {str(e)}")
+        return templates.TemplateResponse(request, "login.html", {"error": f"소셜 로그인 오류 발생: {str(e)}"})
 
 # ==========================================
 # 3. 로그아웃 처리 (POST/GET)
