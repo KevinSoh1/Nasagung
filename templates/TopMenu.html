@@ -1,4 +1,4 @@
-﻿<header>
+<header>
     <div class="header-container">
         <a href="/"><div class="logo">나사궁(나의 사주가 궁금해)</div></a>
         <nav>
@@ -19,9 +19,24 @@
                 <li><a href="#">커뮤니티</a></li>
             </ul>
         </nav>
-        <div class="auth-buttons">
+        
+        <div class="auth-buttons align-items-center d-flex gap-2">
+            {% if user %}
+            <!-- 로그인 되었을 때 표시 영역 -->
+            <div class="user-info-text text-end me-2" style="font-size: 0.85rem; line-height: 1.3; color: #fff;">
+                <div><strong style="color: var(--accent-gold, #cfb53b);">{{ user.name }}</strong>님 반갑습니다</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">현재 포인트 : <strong>{{ "{:,}".format(user.current_point | default(0)) }}</strong> P</div>
+            </div>
+            
+            <a href="/mypage"><button class="btn-mypage" style="background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 5px; font-size: 0.85rem; cursor: pointer;">마이페이지</button></a>
+            <a href="/charge"><button class="btn-charge" style="background: var(--accent-gold, #cfb53b); border: none; color: #000; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; cursor: pointer;">포인트 충전</button></a>
+            <a href="/logout"><button class="btn-logout" style="background: #e74c3c; border: none; color: #fff; padding: 6px 12px; border-radius: 5px; font-size: 0.85rem; cursor: pointer;">로그아웃</button></a>
+            
+            {% else %}
+            <!-- 비로그인 상태 일때 표시 영역 -->
             <a href="/login"><button class="btn-login">로그인</button></a>
             <a href="/register"><button class="btn-signup">회원가입</button></a>
+            {% endif %}
         </div>
     </div>
 </header>
