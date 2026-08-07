@@ -204,7 +204,7 @@ async def login_submit(
 # ==========================================
 # 2-1. 소셜 로그인 콜백 처리 (네이버 / 카카오)
 # ==========================================
-@app.get("/nasagung/callback")
+@app.get("/callback")
 async def social_callback(
     request: Request,
     type: str = "",
