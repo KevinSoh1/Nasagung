@@ -15,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from openai import OpenAI
 from fastapi.staticfiles import StaticFiles  # Static Files 임포트
+from fastapi import Cookie  # Cookie 패키지 추가
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -139,22 +140,38 @@ class SajuRequest(BaseModel):
     partnerBirthtime: Optional[str] = ""
     partnerCalendarType: Optional[str] = ""
 
+# 로그인 유저 정보 조회 함수 (helper)
+def get_current_user(user_email: str, db):
+  if not user_email:
+    return None
+  with db.cursor() as cursor:
+    sql = "SELECT email, name, current_point FROM nasagung_users WHERE email = %s"
+    cursor.execute(sql, (user_email,))
+    return cursor.fetchone()
+      
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    """templates 폴더 안의 index.html 또는 index.php를 Jinja2 템플릿으로 감지하여 반환하는 라우터"""
-    
-    # 1. templates 폴더 안에서 index.html 또는 index.php 검색
-    for target_file in ["index.html"]:
-        file_path = os.path.join(templates_dir, target_file)
-        if os.path.exists(file_path):
-            # 💡 f.read() 대신 TemplateResponse를 사용해야 {% include %}가 동작합니다!
-            return templates.TemplateResponse(request, target_file)
-            
-    # 2. 찾지 못했을 경우 예외 처리
-    return HTMLResponse(
-        content="<h1>Error: templates 폴더 내에서 index.html 또는 index.php 문서를 찾을 수 없습니다.</h1>", 
-        status_code=404
-    )
+async def read_root(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db),
+):
+  current_user = get_current_user(user_email, db)
+
+  for target_file in ["index.html"]:
+    file_path = os.path.join(templates_dir, target_file)
+    if os.path.exists(file_path):
+      # user 객체를 템플릿 context로 함께 전달
+      return templates.TemplateResponse(
+          request, target_file, {"user": current_user}
+      )
+
+  return HTMLResponse(
+      content=(
+          "<h1>Error: templates 폴더 내에서 index.html 문서를 찾을 수"
+          " 없습니다.</h1>"
+      ),
+      status_code=404,
+  )
 
 # ==========================================
 # 1. 로그인 페이지 화면 띄우기 (GET)
