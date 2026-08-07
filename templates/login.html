@@ -55,8 +55,8 @@
         .login-card .text-muted { color: #6c757d !important; }
 
         /* 소셜 간편 로그인 버튼 스타일 정의 */
-        .btn-naver { background: #03C75A; color: white !important; }
-        .btn-kakao { background: #FEE500; color: #3c1e1e !important; }
+        .btn-naver { background: #03C75A; color: white !important; border: none; width: 100%; cursor: pointer; }
+        .btn-kakao { background: #FEE500; color: #3c1e1e !important; border: none; width: 100%; cursor: pointer; }
         .btn-social { 
             height: 45px; 
             display: flex; 
@@ -160,9 +160,9 @@
 
             <div class="text-center small text-muted mb-3">또는 간편 로그인</div>
         
-            <!-- 💡 Jinja2 변수 문법으로 변경 -->
-            <a href="{{ naver_url | default('#') }}" class="btn-social btn-naver">네이버로 시작하기</a>
-            <a href="{{ kakao_url | default('#') }}" class="btn-social btn-kakao">카카오로 시작하기</a>
+            <!-- 💡 자바스크립트 함수 호출로 소셜 로그인 진행 -->
+            <button type="button" onclick="loginWithNaver()" class="btn-social btn-naver">네이버로 시작하기</button>
+            <button type="button" onclick="loginWithKakao()" class="btn-social btn-kakao">카카오로 시작하기</button>
             
             <div class="text-center mt-4 small">
                 계정이 없으신가요? <a href="/register" class="text-decoration-none text-primary fw-bold">회원가입</a>
@@ -170,6 +170,30 @@
         </div>
     </div>
 </main>
+
+<script>
+    // 네이버 / 카카오 Client ID 및 Redirect URI 설정
+    const NAVER_CLIENT_ID = 'UF79Ckgq9nduIA5W44JW';
+    const KAKAO_CLIENT_ID = '3df972d36e9c33e81dc306fa0829de88';
+    
+    // 콜백 처리용 FastAPI URL (Redirect URI)
+    const NAVER_REDIRECT_URI = encodeURIComponent('https://highteck.kr/nasagung/callback?type=naver');
+    const KAKAO_REDIRECT_URI = encodeURIComponent('https://highteck.kr/nasagung/callback?type=kakao');
+
+    function loginWithNaver() {
+        // CSRF 방지를 위한 무작위 state 생성
+        const state = Math.random().toString(36).substring(2, 15);
+        sessionStorage.setItem('naver_state', state);
+
+        const naverUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${NAVER_REDIRECT_URI}&state=${state}`;
+        window.location.href = naverUrl;
+    }
+
+    function loginWithKakao() {
+        const kakaoUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${KAKAO_REDIRECT_URI}&response_type=code`;
+        window.location.href = kakaoUrl;
+    }
+</script>
 
 </body>
 </html>
