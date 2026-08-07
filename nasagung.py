@@ -47,7 +47,7 @@ app.add_middleware(
 
 # 소셜 로그인 API 상수 정의
 NAVER_CLIENT_ID = 'UF79Ckgq9nduIA5W44JW'
-NAVER_CLIENT_SECRET = os.getenv('NAVER_CLIENT_SECRET', 'YOUR_NAVER_CLIENT_SECRET')  # 네이버 개발자 센터 Secret 값 입력
+NAVER_CLIENT_SECRET = os.getenv('NAVER_CLIENT_SECRET', 'KMrCXfSWK0')  # 네이버 개발자 센터 Secret 값 입력
 NAVER_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=naver'
 
 KAKAO_CLIENT_ID = '3df972d36e9c33e81dc306fa0829de88'
