@@ -9,6 +9,7 @@ import urllib.parse
 import requests
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Form, Depends,UploadFile,File
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
