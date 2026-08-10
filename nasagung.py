@@ -401,7 +401,7 @@ async def register_submit(
     gender: str = Form(...),
     birthyear: int = Form(...),
     birthday: str = Form(...),
-    birthtime: str = Form(..ㄹ.),
+    birthtime: str = Form(...),
     phone: str = Form(...),
     profile_img: UploadFile = File(None), # 업로드 파일 (선택)
     db=Depends(get_db)
