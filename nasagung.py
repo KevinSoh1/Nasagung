@@ -520,6 +520,16 @@ async def mypage(request: Request, db=Depends(get_db)):
         else:
             img_display_path = f"../static/images/{current_img}"
 
+    # 💡 TemplateResponse 전달 (request 필수)
+    return templates.TemplateResponse(
+        request=request,
+        name="mypage.html",
+        context={
+            "user": user,
+            "img_display_path": img_display_path  # HTML의 src="{{ img_display_path }}" 로 전달됨
+        }
+    )
+
     # 4. Jinja2 템플릿 반환
     return templates.TemplateResponse(
         request=request,
