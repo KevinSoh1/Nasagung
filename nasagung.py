@@ -540,6 +540,159 @@ async def mypage(request: Request, db=Depends(get_db)):
         }
     )
 
+# ==========================================
+# MyPage에서 정보 수정
+# ==========================================
+# 1. 정보 수정 페이지 화면 띄우기 (GET)
+@app.get("/edit-profile", response_class=HTMLResponse)
+async def edit_profile_page(request: Request, db=Depends(get_db)):
+    # 로그인 체크
+    user_email = request.cookies.get("user_email")
+    if not user_email:
+        return HTMLResponse(
+            content="<script>alert('로그인이 필요합니다.'); location.href='/login';</script>"
+        )
+
+    with db.cursor() as cursor:
+        sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
+        cursor.execute(sql, (user_email,))
+        user = cursor.fetchone()
+
+    if not user:
+        return HTMLResponse(
+            content="<script>alert('사용자 정보를 찾을 수 없습니다.'); location.href='/login';</script>"
+        )
+
+    # 미등록 프로필 시 12지신 띠 자동 할당 및 DB 반영
+    current_img = user.get("profile_img") or ""
+    if not current_img or current_img == "default_profile.png":
+        birthyear = int(user.get("birthyear", 0))
+        if birthyear > 0:
+            zodiac_icons = {
+                0: "monkey.png",  1: "rooster.png", 2: "dog.png",    3: "pig.png",
+                4: "rat.png",      5: "ox.png",       6: "tiger.png",  7: "rabbit.png",
+                8: "dragon.png",   9: "snake.png",   10: "horse.png", 11: "sheep.png"
+            }
+            auto_icon = zodiac_icons[birthyear % 12]
+            with db.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE nasagung_users SET profile_img = %s WHERE email = %s",
+                    (auto_icon, user_email)
+                )
+                db.commit()
+            user["profile_img"] = auto_icon
+            current_img = auto_icon
+
+    # 화면에 표시할 이미지 경로 계산
+    if "_" in current_img:
+        img_display_path = f"/static/uploads/{current_img}"
+    else:
+        img_display_path = f"/static/images/{current_img}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_profile.html",
+        context={
+            "user": user,
+            "img_display_path": img_display_path
+        }
+    )
+
+
+# 2. 정보 수정 폼 제출 처리 (POST)
+@app.post("/edit-profile", response_class=HTMLResponse)
+async def edit_profile_submit(
+    request: Request,
+    name: str = Form(...),
+    gender: str = Form(...),
+    birthyear: int = Form(...),
+    birthday: str = Form(...),
+    birthtime: str = Form(...),
+    phone: str = Form(...),
+    calendarType: str = Form(...),
+    password: str = Form(None), # 선택 사항
+    profile_img: UploadFile = File(None), # 선택 사항
+    db=Depends(get_db)
+):
+    user_email = request.cookies.get("user_email")
+    if not user_email:
+        return HTMLResponse(
+            content="<script>alert('로그인이 필요합니다.'); location.href='/login';</script>"
+        )
+
+    try:
+        # 1. 동적 UPDATE 쿼리 필드 조립
+        update_fields = [
+            "name = %s", "gender = %s", "birthyear = %s",
+            "birthday = %s", "birthtime = %s", "phone = %s", "calendarType = %s"
+        ]
+        params = [name, gender, birthyear, birthday, birthtime, phone, calendarType]
+
+        # 2. 비밀번호 입력 시 해시(MD5) 변경
+        if password and password.strip():
+            hashed_pw = hashlib.md5(password.strip().encode('utf-8')).hexdigest()
+            update_fields.append("password = %s")
+            params.append(hashed_pw)
+
+        # 3. 새로운 프로필 파일 업로드 시 저장
+        if profile_img and profile_img.filename:
+            file_ext = os.path.splitext(profile_img.filename)[1]
+            new_file_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{file_ext}"
+            file_path = os.path.join(UPLOAD_DIR, new_file_name)
+
+            contents = await profile_img.read()
+            with open(file_path, "wb") as f:
+                f.write(contents)
+
+            update_fields.append("profile_img = %s")
+            params.append(new_file_name)
+
+        # WHERE 조건 파라미터 추가
+        params.append(user_email)
+        sql = f"UPDATE nasagung_users SET {', '.join(update_fields)} WHERE email = %s"
+
+        with db.cursor() as cursor:
+            cursor.execute(sql, tuple(params))
+            db.commit()
+
+        # 수정 후 데이터 다시 조회하여 화면 갱신
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
+            updated_user = cursor.fetchone()
+
+        curr_img = updated_user.get("profile_img") or ""
+        img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit_profile.html",
+            context={
+                "user": updated_user,
+                "img_display_path": img_path,
+                "success": True
+            }
+        )
+
+    except Exception as e:
+        # 에러 발생 시 기존 데이터 재조회 후 error 넘김
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+
+        curr_img = user.get("profile_img") or ""
+        img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit_profile.html",
+            context={
+                "user": user,
+                "img_display_path": img_path,
+                "error": f"수정 중 오류가 발생했습니다: {str(e)}"
+            }
+        )
+
+
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
     try:
