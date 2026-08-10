@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나사궁 - 내 정보 수정</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Pretendard:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        a { text-decoration: none; color: black; }
+        a:visited { color: black; }
+        a:hover { color: gray; }
+        a:active { color: black; }
+
+        :root {
+            --bg-dark: #0a1128;
+            --accent-gold: #cfb53b;
+            --white: #ffffff;
+            --text-muted: #bdc3c7;
+            --glass-bg: rgba(255, 255, 255, 0.92);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background: var(--bg-dark); 
+            color: var(--white); 
+            overflow-x: hidden; 
+        }
+
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(rgba(10, 17, 40, 0.5), rgba(10, 17, 40, 0.5)), 
+                        url('/static/images/background.png') center/cover no-repeat;
+            background-attachment: fixed;
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            padding-top: 140px; 
+            padding-bottom: 60px;
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 800px; width: 100%; margin: 0 auto; padding: 20px; }
+
+        .intro-text { text-align: center; margin-bottom: 30px; }
+        .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 2.5rem; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .intro-text .highlight { color: var(--accent-gold); }
+
+        .edit-section { 
+            background: var(--glass-bg); 
+            padding: 45px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+            color: #333; 
+        }
+
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px 30px; 
+            margin-bottom: 25px;
+        }
+        
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: span 2; }
+        
+        .form-group label { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #444; }
+        .form-group label span { color: #888; font-weight: normal; font-size: 0.8rem; margin-left: 5px; }
+        .form-group input, .form-group select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; color: #333; transition: 0.3s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent-gold); outline: none; box-shadow: 0 0 0 3px rgba(207, 181, 59, 0.2); }
+        
+        .form-group input[readonly] { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
+
+        .gender-group { display: flex; gap: 10px; }
+        .gender-btn { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; transition: 0.3s; color: #333; }
+        .gender-btn.active { background: var(--bg-dark); color: var(--white); border-color: var(--bg-dark); }
+
+        .avatar-preview-container { display: flex; align-items: center; gap: 20px; }
+        .avatar-preview { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent-gold); object-fit: cover; background: #f7f3eb; padding: 3px; }
+
+        .action-buttons { display: flex; gap: 15px; margin-top: 35px; }
+        .btn-submit-edit { background: var(--accent-gold); color: #000; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 700; flex: 1.5; cursor: pointer; transition: 0.3s; }
+        .btn-submit-edit:hover { background: #b89e2b; transform: translateY(-2px); }
+        .btn-cancel { background: transparent; border: 1px solid #aaa; color: #666; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; flex: 1; text-align: center; display: inline-block; transition: 0.3s; }
+        .btn-cancel:hover { background: #eee; color: #333; }
+
+        @media (max-width: 768px) {
+            .edit-form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+            .action-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'TopMenu.html' %}
+
+<main class="hero">
+    <div class="hero-content">
+        <section class="intro-text">
+            <h1><span class="highlight">회원 정보</span> 수정</h1>
+        </section>
+
+        <section class="edit-section">
+            
+            <!-- 💡 에러 발생 시 팝업 띄우기 -->
+            {% if error %}
+            <script>
+                alert("{{ error }}");
+            </script>
+            {% endif %}
+
+            <!-- 💡 수정 성공 시 팝업 후 마이페이지 이동 -->
+            {% if success %}
+            <script>
+                alert("회원 정보가 성공적으로 수정되었습니다.");
+                window.location.href = "/mypage";
+            </script>
+            {% endif %}
+
+            <form action="/edit-profile" method="POST" enctype="multipart/form-data">
+                
+                <div class="form-group full-width mb-4">
+                    <label>프로필 사진 변경</label>
+                    <div class="avatar-preview-container">
+                        <img src="{{ img_display_path }}" id="avatar_img_preview" class="avatar-preview" alt="프로필 미리보기">
+                        <input type="file" name="profile_img" id="profile_file_input" class="form-control" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="edit-form-grid">
+                    
+                    <div class="form-group">
+                        <label>이메일 계정 <span>(변경 불가)</span></label>
+                        <input type="email" value="{{ user.email }}" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>이름</label>
+                        <input type="text" name="name" value="{{ user.name }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>비밀번호 변경 <span>(변경 시에만 입력)</span></label>
+                        <input type="password" name="password" placeholder="변경하지 않으려면 공란으로 유지">
+                    </div>
+
+                    <div class="form-group">
+                        <label>성별</label>
+                        <div class="gender-group">
+                            <button type="button" class="gender-btn {% if user.gender == 'male' %}active{% endif %}" onclick="setGender('male')">남성</button>
+                            <button type="button" class="gender-btn {% if user.gender == 'female' %}active{% endif %}" onclick="setGender('female')">여성</button>
+                        </div>
+                        <input type="hidden" name="gender" id="gender_hidden" value="{{ user.gender }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>출생연도</label>
+                        <input type="number" name="birthyear" value="{{ user.birthyear }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>생일 (MM-DD)</label>
+                        <input type="text" name="birthday" value="{{ user.birthday }}" placeholder="예: 05-20" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>태어난 시간 (시주)</label>
+                        <select name="birthtime" class="form-select">
+                            <option value="子(자)" {% if user.birthtime == '子' %}selected{% endif %}>子시 (23:30 ~ 01:29)</option>
+                            <option value="丑(축)" {% if user.birthtime == '丑' %}selected{% endif %}>丑시 (01:30 ~ 03:29)</option>
+                            <option value="寅(인)" {% if user.birthtime == '寅' %}selected{% endif %}>寅시 (03:30 ~ 05:29)</option>
+                            <option value="卯(묘)" {% if user.birthtime == '卯' %}selected{% endif %}>卯시 (05:30 ~ 07:29)</option>
+                            <option value="辰(진)" {% if user.birthtime == '辰' %}selected{% endif %}>辰시 (07:30 ~ 09:29)</option>
+                            <option value="巳(사)" {% if user.birthtime == '巳' %}selected{% endif %}>巳시 (09:30 ~ 11:29)</option>
+                            <option value="午(오)" {% if user.birthtime == '午' %}selected{% endif %}>午시 (11:30 ~ 13:29)</option>
+                            <option value="未(미)" {% if user.birthtime == '未' %}selected{% endif %}>未시 (13:30 ~ 15:29)</option>
+                            <option value="申(신)" {% if user.birthtime == '申' %}selected{% endif %}>申시 (15:30 ~ 17:29)</option>
+                            <option value="酉(유)" {% if user.birthtime == '酉' %}selected{% endif %}>酉시 (17:30 ~ 19:29)</option>
+                            <option value="戌(술)" {% if user.birthtime == '戌' %}selected{% endif %}>戌시 (19:30 ~ 21:29)</option>
+                            <option value="亥(해)" {% if user.birthtime == '亥' %}selected{% endif %}>亥시 (21:30 ~ 23:29)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>전화번호</label>
+                        <input type="tel" name="phone" value="{{ user.phone }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>달력 선택</label>
+                        <select name="calendarType" class="form-select" required>
+                            <option value="양력" {% if user.calendarType == '양력' or not user.calendarType %}selected{% endif %}>양력</option>
+                            <option value="음력-평달" {% if user.calendarType == '음력-평달' %}selected{% endif %}>음력-평달</option>
+                            <option value="음력-윤달" {% if user.calendarType == '음력-윤달' %}selected{% endif %}>음력-윤달</option>
+                        </select>
+                    </div>
+
+                </div> 
+                
+                <div class="action-buttons">
+                    <button type="submit" class="btn-submit-edit">수정 완료하기</button>
+                    <a href="/mypage" class="btn-cancel">취소</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<script>
+    function setGender(gender) {
+        document.getElementById('gender_hidden').value = gender;
+        const btns = document.querySelectorAll('.gender-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        
+        if(gender === 'male') {
+            btns[0].classList.add('active');
+        } else {
+            btns[1].classList.add('active');
+        }
+    }
+
+    document.getElementById('profile_file_input').addEventListener('change', function(e) {
+        if(this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('avatar_img_preview').src = event.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
+
+</body>
+</html>
