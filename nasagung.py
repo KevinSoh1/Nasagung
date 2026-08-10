@@ -488,7 +488,7 @@ async def mypage(request: Request, db=Depends(get_db)):
 
     # 2. DB에서 사용자 정보 조회
     with db.cursor() as cursor:
-        sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
+        sql = "SELECT * FROM nasagung_users WHERE email = %s"
         cursor.execute(sql, (user_email,))
         user = cursor.fetchone()
 
