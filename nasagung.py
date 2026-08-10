@@ -476,7 +476,6 @@ async def register_submit(
 # ==========================================
 # Mypage 처리 부분
 # ==========================================
-
 @app.get("/mypage", response_class=HTMLResponse)
 async def mypage(request: Request, db=Depends(get_db)):
     # 1. 로그인 여부 체크 (쿠키에서 user_email 확인)
