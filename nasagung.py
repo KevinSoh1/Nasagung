@@ -510,15 +510,15 @@ async def mypage(request: Request, db=Depends(get_db)):
                 8: "dragon.png",   9: "snake.png",   10: "horse.png", 11: "sheep.png"
             }
             remainder = birthyear % 12
-            img_display_path = f"../static/images/{zodiac_icons[remainder]}"
+            img_display_path = f"/static/images/{zodiac_icons[remainder]}"
         else:
-            img_display_path = "../static/images/default_profile.png"
+            img_display_path = "/static/images/default_profile.png"
     else:
         # 업로드된 파일(_)인지 static/images의 띠 파일인지 구별
         if "_" in current_img:
-            img_display_path = f"../static/uploads/{current_img}"
+            img_display_path = f"/static/uploads/{current_img}"
         else:
-            img_display_path = f"../static/images/{current_img}"
+            img_display_path = f"/static/images/{current_img}"
 
     # 💡 TemplateResponse 전달 (request 필수)
     return templates.TemplateResponse(
