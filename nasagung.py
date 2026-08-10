@@ -186,44 +186,76 @@ def get_current_user(user_email: str, db):
     cursor.execute(sql, (user_email,))
     return cursor.fetchone()
 
+import hashlib
+from fastapi import FastAPI, Request, Form, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
 # ==========================================
 # 1. 로그인 페이지 화면 띄우기 (GET)
 # ==========================================
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse(request, "login.html")
+
+
 # ==========================================
 # 2. 로그인 폼 제출 처리 (POST)
 # ==========================================
 @app.post("/login", response_class=HTMLResponse)
 async def login_submit(
     request: Request,
-    email: str = Form(...),       # login.html의 name="email" 값을 받아옴
-    password: str = Form(...),    # login.html의 name="password" 값을 받아옴
+    email: str = Form(...),       # login.html의 name="email"
+    password: str = Form(...),    # login.html의 name="password"
     db=Depends(get_db)
 ):
     try:
-        # 일반 로그인 비밀번호 해시 처리
-        hashed_pw = hashlib.md5(password.encode('utf-8')).hexdigest()
+        # 입력된 비밀번호 공백 제거 후 MD5 해시 생성
+        clean_pw = password.strip()
+        hashed_pw = hashlib.md5(clean_pw.encode('utf-8')).hexdigest()
         
         with db.cursor() as cursor:
-            sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
-            cursor.execute(sql, (email,))
+            # 💡 provider 조건 제거: 네이버 계정이어도 비밀번호를 만들었으면 로그인 가능하게 함
+            sql = "SELECT * FROM nasagung_users WHERE email = %s"
+            cursor.execute(sql, (email.strip(),))
             user = cursor.fetchone()
 
-        # 💡 2. 유저가 없거나 비밀번호가 틀린 경우
-        # (단순 비교 예시, 실제 서비스 운영 시 bcrypt 등 암호화 해시 비교 권장)
-        if not user or user["password"] != hashed_pw:
+        # 💡 1. 가입된 계정이 없는 경우
+        if not user:
             return templates.TemplateResponse(
                 request,
                 "login.html",
-                {"error": "이메일 또는 비밀번호가 올바르지 않습니다."}
+                {"error": "존재하지 않는 이메일 계정입니다."}
             )
 
-        # 💡 3. 로그인 성공 시 메인 페이지로 이동 및 로그인 쿠키 설정
-        response = RedirectResponse(url="/", status_code=303)
-        # 브라우저 쿠키에 user_id 저장 (HTTP-Only 보안 설정)
-        response.set_cookie(key="user_email", value=user["email"], httponly=True)
+        # 💡 2. 비밀번호가 설정되어 있지 않은 소셜 가입자 처리
+        if not user.get("password"):
+            provider_name = user.get("provider", "소셜").upper()
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {"error": f"해당 계정은 {provider_name} 간편 로그인으로 가입된 계정입니다. {provider_name} 버튼을 이용해 주세요."}
+            )
+
+        # 💡 3. 비밀번호 검증
+        if user["password"] != hashed_pw:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {"error": "비밀번호가 올바르지 않습니다."}
+            )
+
+        # 💡 4. 로그인 성공: 마이페이지 또는 메인페이지로 이동 및 안전한 쿠키 설정
+        response = RedirectResponse(url="/mypage", status_code=303)
+        
+        # HTTP-Only 및 SameSite 쿠키 설정으로 보안 강화
+        response.set_cookie(
+            key="user_email",
+            value=user["email"],
+            httponly=True,
+            samesite="lax",
+            max_age=86400  # 1일간 유지
+        )
         return response
 
     except Exception as e:
