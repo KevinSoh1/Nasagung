@@ -554,7 +554,7 @@ async def edit_profile_page(request: Request, db=Depends(get_db)):
         )
 
     with db.cursor() as cursor:
-        sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
+        sql = "SELECT * FROM nasagung_users WHERE email = %s"
         cursor.execute(sql, (user_email,))
         user = cursor.fetchone()
 
