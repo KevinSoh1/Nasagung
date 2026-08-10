@@ -85,6 +85,31 @@ def get_db():
         ssl={"ssl": {}}  # Aiven SSL 대응
   )
 
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db),
+):
+  current_user = get_current_user(user_email, db)
+
+  for target_file in ["index.html"]:
+    file_path = os.path.join(templates_dir, target_file)
+    if os.path.exists(file_path):
+      # user 객체를 템플릿 context로 함께 전달
+      return templates.TemplateResponse(
+          request, target_file, {"user": current_user}
+      )
+
+  return HTMLResponse(
+      content=(
+          "<h1>Error: templates 폴더 내에서 index.html 문서를 찾을 수"
+          " 없습니다.</h1>"
+      ),
+      status_code=404,
+  )
+
 # DB 연결 테스트 전용 엔드포인트
 @app.get("/db-test")
 async def test_db():
@@ -148,30 +173,6 @@ def get_current_user(user_email: str, db):
     sql = "SELECT email, name, current_point FROM nasagung_users WHERE email = %s"
     cursor.execute(sql, (user_email,))
     return cursor.fetchone()
-      
-@app.get("/", response_class=HTMLResponse)
-async def read_root(
-    request: Request,
-    user_email: Optional[str] = Cookie(None),
-    db=Depends(get_db),
-):
-  current_user = get_current_user(user_email, db)
-
-  for target_file in ["index.html"]:
-    file_path = os.path.join(templates_dir, target_file)
-    if os.path.exists(file_path):
-      # user 객체를 템플릿 context로 함께 전달
-      return templates.TemplateResponse(
-          request, target_file, {"user": current_user}
-      )
-
-  return HTMLResponse(
-      content=(
-          "<h1>Error: templates 폴더 내에서 index.html 문서를 찾을 수"
-          " 없습니다.</h1>"
-      ),
-      status_code=404,
-  )
 
 # ==========================================
 # 1. 로그인 페이지 화면 띄우기 (GET)
@@ -400,7 +401,7 @@ async def register_submit(
     gender: str = Form(...),
     birthyear: int = Form(...),
     birthday: str = Form(...),
-    birthtime: str = Form(...),
+    birthtime: str = Form(..ㄹ.),
     phone: str = Form(...),
     profile_img: UploadFile = File(None), # 업로드 파일 (선택)
     db=Depends(get_db)
@@ -471,6 +472,64 @@ async def register_submit(
             request, "register.html", 
             {"error": f"가입 중 오류가 발생했습니다: {str(e)}"}
         )
+
+# ==========================================
+# Mypage 처리 부분
+# ==========================================
+
+@app.get("/mypage", response_class=HTMLResponse)
+async def mypage(request: Request, db=Depends(get_db)):
+    # 1. 로그인 여부 체크 (쿠키에서 user_email 확인)
+    user_email = request.cookies.get("user_email")
+    if not user_email:
+        # 미로그인 시 알림 팝업 후 로그인 페이지로 이동
+        return HTMLResponse(
+            content="<script>alert('로그인이 필요한 서비스입니다.'); location.href='/login';</script>"
+        )
+
+    # 2. DB에서 사용자 정보 조회
+    with db.cursor() as cursor:
+        sql = "SELECT * FROM nasagung_users WHERE email = %s AND provider = 'local'"
+        cursor.execute(sql, (user_email,))
+        user = cursor.fetchone()
+
+    if not user:
+        return HTMLResponse(
+            content="<script>alert('사용자 정보를 찾을 수 없습니다.'); location.href='/login';</script>"
+        )
+
+    # 3. 이미지 경로 및 12지신 자동 할당 로직
+    current_img = user.get("profile_img") or ""
+    img_display_path = ""
+
+    if not current_img or current_img == "default_profile.png":
+        birthyear = int(user.get("birthyear", 0))
+        if birthyear > 0:
+            zodiac_icons = {
+                0: "monkey.png",  1: "rooster.png", 2: "dog.png",    3: "pig.png",
+                4: "rat.png",      5: "ox.png",       6: "tiger.png",  7: "rabbit.png",
+                8: "dragon.png",   9: "snake.png",   10: "horse.png", 11: "sheep.png"
+            }
+            remainder = birthyear % 12
+            img_display_path = f"/static/images/{zodiac_icons[remainder]}"
+        else:
+            img_display_path = "/static/images/default_profile.png"
+    else:
+        # 업로드된 파일(_)인지 static/images의 띠 파일인지 구별
+        if "_" in current_img:
+            img_display_path = f"/static/uploads/{current_img}"
+        else:
+            img_display_path = f"/static/images/{current_img}"
+
+    # 4. Jinja2 템플릿 반환
+    return templates.TemplateResponse(
+        request=request,
+        name="mypage.html",
+        context={
+            "user": user,
+            "img_display_path": img_display_path
+        }
+    )
 
 @app.post("/nasagung/analyze")
 async def get_saju_analysis(request: SajuRequest):
