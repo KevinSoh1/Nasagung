@@ -24,17 +24,28 @@ logger = logging.getLogger(__name__)
 # FastAPI 생성
 app = FastAPI()
 
-# nasagung.py와 같은 위치에 있는 templates 폴더 지정
+# 1. Base 디렉토리 정의
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 2. templates 폴더 설정
 templates_dir = os.path.join(BASE_DIR, "templates")
+if not os.path.exists(templates_dir):
+    os.makedirs(templates_dir, exist_ok=True)
+
 templates = Jinja2Templates(directory=templates_dir)
-templates.env.charset = "utf-8" # 템플릿 인코딩 강제 고정
+# Jinja2 3.x 이상 환경 대응 (지시어 직접 지정 방식)
+templates.env.jinja_env.policies.setdefault("json.dumps_kwargs", {})
 
-# /static 경로를 static 폴더와 매핑 (이미지, CSS, JS 파일 제공용)
+# 3. static 및 static/uploads 폴더 자동 생성 (💡 중요)
 static_dir = os.path.join(BASE_DIR, "static")
-if not os.path.exists(static_dir):
-    os.makedirs(static_dir) # static 폴더가 없으면 자동 생성
+uploads_dir = os.path.join(static_dir, "uploads")
+images_dir = os.path.join(static_dir, "images")
 
+# static 하위 필수 폴더들까지 존재하지 않으면 자동으로 생성
+for folder in [static_dir, uploads_dir, images_dir]:
+    os.makedirs(folder, exist_ok=True)
+
+# 4. /static 경로 매핑 (정적 파일 제공)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # CORS 에러 방지 설정
