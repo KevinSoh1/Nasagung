@@ -149,67 +149,71 @@
         <div class="main-content-layout mt-5">
             <section class="saju-section">
                 <h2>명반 분석 입력</h2>
-               <form id="sajuForm">
+              <form id="sajuForm">
+    <div class="form-grid">
 
-		    <div class="form-grid">
-		
-		        <div class="form-group">
-		            <label>이름</label>
-		            <input type="text" name="name" placeholder="이름을 입력하세요" required>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>성별</label>
-		
-		            <!-- 실제 전송용 hidden -->
-		            <input type="hidden" name="gender" id="genderValue" value="남성">
-		
-		            <div class="gender-group">
-		                <button type="button" class="gender-btn active">남성</button>
-		                <button type="button" class="gender-btn">여성</button>
-		            </div>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>생년월일</label>
-		            <input type="date" name="birthdate" required>
-		        </div>
-		
-		        <div class="form-group">
-		            <label>출생시간</label>
-		            <select name="birthtime" required>
-		                <option value="">시간 선택</option>
-		                <option value="자">子시 (23:30 ~ 01:29)</option>
-		                <option value="축">丑시 (01:30 ~ 03:29)</option>
-		                <option value="인">寅시 (03:30 ~ 05:29)</option>
-		                <option value="묘">卯시 (05:30 ~ 07:29)</option>
-		                <option value="진">辰시 (07:30 ~ 09:29)</option>
-		                <option value="사">巳시 (09:30 ~ 11:29)</option>
-		                <option value="오">午시 (11:30 ~ 13:29)</option>
-		                <option value="미">未시 (13:30 ~ 15:29)</option>
-		                <option value="신">申시 (15:30 ~ 17:29)</option>
-		                <option value="유">酉시 (17:30 ~ 19:29)</option>
-		                <option value="술">戌시 (19:30 ~ 21:29)</option>
-		                <option value="해">亥시 (21:30 ~ 23:29)</option>
-		            </select>
-		        </div>
-		
-		        <div class="form-group full-width">
-		            <label>캘린더 선택</label>
-		            <select name="calendarType">
-		                <option value="양력">양력 (Solar)</option>
-		                <option value="음력-평달">음력 평달 (Lunar Regular)</option>
-		                <option value="음력-윤달">음력 윤달 (Lunar Leap)</option>
-		            </select>
-		        </div>
-		
-		    </div>
-		
-		    <button type="submit" class="btn-submit">
-		        운명 분석하기 ➔
-		    </button>
-		
-		</form>
+        <div class="form-group">
+            <label>이름</label>
+            <!-- 로그인되어 있다면 DB의 이름(user.name) 출력 -->
+            <input type="text" name="name" placeholder="이름을 입력하세요" value="{{ user.name if user else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>성별</label>
+
+            <!-- 실제 전송용 hidden: DB 값(user.gender)이 있으면 적용, 없으면 기본값 '남성' -->
+            <input type="hidden" name="gender" id="genderValue" value="{{ user.gender if user else '남성' }}">
+
+            <div class="gender-group">
+                <button type="button" class="gender-btn {{ 'active' if not user or user.gender == '남성' else '' }}">남성</button>
+                <button type="button" class="gender-btn {{ 'active' if user and user.gender == '여성' else '' }}">여성</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>생년월일</label>
+            <!-- DB의 생년월일(user.birthdate - YYYY-MM-DD 형식) 출력 -->
+            <input type="date" name="birthdate" value="{{ user.birthdate if user else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>출생시간</label>
+            <select name="birthtime" required>
+                <option value="">시간 선택</option>
+                {% set user_time = user.birthtime if user else '' %}
+                <option value="자" {{ 'selected' if user_time == '자' else '' }}>子시 (23:30 ~ 01:29)</option>
+                <option value="축" {{ 'selected' if user_time == '축' else '' }}>丑시 (01:30 ~ 03:29)</option>
+                <option value="인" {{ 'selected' if user_time == '인' else '' }}>寅시 (03:30 ~ 05:29)</option>
+                <option value="묘" {{ 'selected' if user_time == '묘' else '' }}>卯시 (05:30 ~ 07:29)</option>
+                <option value="진" {{ 'selected' if user_time == '진' else '' }}>辰시 (07:30 ~ 09:29)</option>
+                <option value="사" {{ 'selected' if user_time == '사' else '' }}>巳시 (09:30 ~ 11:29)</option>
+                <option value="오" {{ 'selected' if user_time == '오' else '' }}>午시 (11:30 ~ 13:29)</option>
+                <option value="미" {{ 'selected' if user_time == '미' else '' }}>未시 (13:30 ~ 15:29)</option>
+                <option value="신" {{ 'selected' if user_time == '신' else '' }}>申시 (15:30 ~ 17:29)</option>
+                <option value="유" {{ 'selected' if user_time == '유' else '' }}>酉시 (17:30 ~ 19:29)</option>
+                <option value="술" {{ 'selected' if user_time == '술' else '' }}>戌시 (19:30 ~ 21:29)</option>
+                <option value="해" {{ 'selected' if user_time == '해' else '' }}>亥시 (21:30 ~ 23:29)</option>
+				<option value="모름" {{ 'selected' if user_time == '모름' else '' }}>모름</option>
+            </select>
+        </div>
+
+        <div class="form-group full-width">
+            <label>캘린더 선택</label>
+            <select name="calendarType">
+                {% set user_cal = user.calendar_type if user else '양력' %}
+                <option value="양력" {{ 'selected' if user_cal == '양력' else '' }}>양력 (Solar)</option>
+                <option value="음력-평달" {{ 'selected' if user_cal == '음력-평달' else '' }}>음력 평달 (Lunar Regular)</option>
+                <option value="음력-윤달" {{ 'selected' if user_cal == '음력-윤달' else '' }}>음력 윤달 (Lunar Leap)</option>
+            </select>
+        </div>
+
+    </div>
+
+    <button type="submit" class="btn-submit">
+        운명 분석하기 ➔
+    </button>
+
+</form>
             </section>
 
             <aside class="quick-menu">
