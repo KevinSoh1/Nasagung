@@ -172,13 +172,20 @@
         			
 					<div class="form-group">
             			<label>생년월일</label>
-            			<!-- DB field: user.birthyear (1970), user.birthday (10-21) -> input date 형식(YYYY-MM-DD)으로 조합 -->
-            			{% if user and user.birthyear and user.birthday %}
-                		{% set full_birthdate = user.birthyear ~ '-' ~ user.birthday %}
-            			{% else %}
-                		{% set full_birthdate = '' %}
-            			{% endif %}
-            			<input type="date" name="birthdate" value="{{ full_birthdate }}" required>
+    						{% if user and user.birthyear and user.birthday %}
+        						{# 월-일 구분자 '-' 기준으로 나누어 각각 2자리수(05, 09 등)로 보정 #}
+        						{% set b_parts = user.birthday.split('-') %}
+        						{% if b_parts|length == 2 %}
+            						{% set m = '%02d' % b_parts[0]|int %}
+            						{% set d = '%02d' % b_parts[1]|int %}
+            						{% set full_birthdate = user.birthyear ~ '-' ~ m ~ '-' ~ d %}
+        							{% else %}
+            							{% set full_birthdate = user.birthyear ~ '-' ~ user.birthday %}
+        						{% endif %}
+    						{% else %}
+        						{% set full_birthdate = '' %}
+    						{% endif %}
+    					<input type="date" name="birthdate" value="{{ full_birthdate }}" required>
         			</div>
 		        	
 					<div class="form-group">
@@ -187,8 +194,8 @@
             				<select name="birthtime" required>
                 				<option value="">시간 선택</option>
                 					{% set u_time = user.birthtime if user and user.birthtime else '' %}
-                					<option value="子(자)" {{ 'selected' if '子(자)' in u_time else '' }}>子(자)(23:30 ~ 01:29)</option>
-                					<option value="丑(축)" {{ 'selected' if '丑(축)' in u_time else '' }}>丑(축)(01:30 ~ 03:29)</option>
+                					<option value="子(자)" { 'selected' if '子(자)' in u_time else '' }>子(자)(23:30 ~ 01:29)</option>
+                					<option value="丑(축)" { 'selected' if '丑(축)' in u_time else ''}>丑(축)(01:30 ~ 03:29)</option>
                 					<option value="寅(인)" {{ 'selected' if '寅(인)' in u_time else '' }}>寅(인)(03:30 ~ 05:29)</option>
                 					<option value="卯(묘)" {{ 'selected' if '卯(묘)' in u_time else '' }}>卯(묘)(05:30 ~ 07:29)</option>
                 					<option value="辰(진)" {{ 'selected' if '辰(진)' in u_time else '' }}>辰(진)(07:30 ~ 09:29)</option>
