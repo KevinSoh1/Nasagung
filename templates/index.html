@@ -194,8 +194,8 @@
             				<select name="birthtime" required>
                 				<option value="">시간 선택</option>
                 					{% set u_time = user.birthtime if user and user.birthtime else '' %}
-                					<option value="子(자)" { 'selected' if '子(자)' in u_time else '' }>子(자)(23:30 ~ 01:29)</option>
-                					<option value="丑(축)" { 'selected' if '丑(축)' in u_time else ''}>丑(축)(01:30 ~ 03:29)</option>
+                					<option value="子(자)" {{ 'selected' if '子(자)' in u_time else '' }}>子(자)(23:30 ~ 01:29)</option>
+                					<option value="丑(축)" {{ 'selected' if '丑(축)' in u_time else '' }}>丑(축)(01:30 ~ 03:29)</option>
                 					<option value="寅(인)" {{ 'selected' if '寅(인)' in u_time else '' }}>寅(인)(03:30 ~ 05:29)</option>
                 					<option value="卯(묘)" {{ 'selected' if '卯(묘)' in u_time else '' }}>卯(묘)(05:30 ~ 07:29)</option>
                 					<option value="辰(진)" {{ 'selected' if '辰(진)' in u_time else '' }}>辰(진)(07:30 ~ 09:29)</option>
