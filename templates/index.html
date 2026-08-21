@@ -165,8 +165,8 @@
             <input type="hidden" name="gender" id="genderValue" value="{{ user.gender if user else '남성' }}">
 
             <div class="gender-group">
-                <button type="button" class="gender-btn {{ 'active' if not user or user.gender == '남성' else '' }}">남성</button>
-                <button type="button" class="gender-btn {{ 'active' if user and user.gender == '여성' else '' }}">여성</button>
+                <button type="button" class="gender-btn {{ 'active' if not user or user.gender == 'male' else '' }}">남성</button>
+                <button type="button" class="gender-btn {{ 'active' if user and user.gender == 'female' else '' }}">여성</button>
             </div>
         </div>
 
