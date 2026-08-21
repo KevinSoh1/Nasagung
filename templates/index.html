@@ -162,7 +162,7 @@
             <label>성별</label>
 
             <!-- 실제 전송용 hidden: DB 값(user.gender)이 있으면 적용, 없으면 기본값 '남성' -->
-            <input type="hidden" name="gender" id="genderValue" value="{{ user.gender if user else '남성' }}">
+            <input type="hidden" name="gender" id="genderValue" value="{{ user.gender if user else 'male' }}">
 
             <div class="gender-group">
                 <button type="button" class="gender-btn {{ 'active' if not user or user.gender == 'male' else '' }}">남성</button>
