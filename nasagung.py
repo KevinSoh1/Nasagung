@@ -179,7 +179,7 @@ def get_current_user(user_email: str, db):
   if not user_email:
     return None
   with db.cursor() as cursor:
-    sql = "SELECT * FROM nasagung_users WHERE email = %s"
+    sql = "SELECT email, name, current_point FROM nasagung_users WHERE email = %s"
     cursor.execute(sql, (user_email,))
     return cursor.fetchone()
 
