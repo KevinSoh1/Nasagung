@@ -191,7 +191,9 @@
 					{% if user and user.birthyear and user.birthday %}
     						<p>출생연도: {{ user.birthyear }}년</p>
     						<p>생일: {{ user.birthday }}</p>
-						{% endif %}
+					{% else %}
+						<p>넘어온 데이타가 없음.</p>
+					{% endif %}
 		        	
 					<div class="form-group">
             			<label>출생시간</label>
