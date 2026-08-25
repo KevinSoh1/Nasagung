@@ -185,16 +185,8 @@
     						{% else %}
         						{% set full_birthdate = '' %}
     						{% endif %}
-    					<input type="date" name="birthdate" value="{{ user.birthyear }}" required>
+    					<input type="date" name="birthdate" value="{{ full_birthdate }}" required>
         			</div>
-
-					{% if user and user.birthyear and user.birthday %}
-    						<p>출생연도: {{ user.birthyear }}년</p>
-    						<p>생일: {{ user.birthday }}</p>
-					{% else %}
-						<p>넘어온 데이타가 없음.</p>
-					{% endif %}
-		        	
 					<div class="form-group">
             			<label>출생시간</label>
             			<!-- DB field: user.birthtime ('子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥' 또는 '巳(사)' 형태 대응) -->
