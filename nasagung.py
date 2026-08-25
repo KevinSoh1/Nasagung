@@ -7,6 +7,7 @@ import logging
 import pymysql
 import urllib.parse
 import requests
+import openai
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Form, Depends,UploadFile,File
 from fastapi.staticfiles import StaticFiles
@@ -732,3 +733,65 @@ async def edit_profile_submit(
                 "error": f"수정 중 오류가 발생했습니다: {str(e)}"
             }
         )
+
+# ==========================================
+# Lotto번호 추춯
+# ==========================================
+@app.post("/lotto", response_class=HTMLResponse)
+async def predict_lotto(
+    request: Request,
+    name: str = Form(...),
+    birthYear: str = Form(...),
+    birthDay: str = Form(...),
+    birthTime: str = Form(...),
+    gender: str = Form(...),
+    calendarType: str = Form(...),
+    fiveElements: str = Form(...)
+):
+    # 생년월일 포맷팅 (YYYY-MM-DD)
+    birthdate = f"{birthYear}-{birthDay}"
+    
+    # 1. 프롬프트 및 설정 정의
+    service_title = "로또 번호 예측"
+    system_role = "당신은 타고난 사주 오행과 천기의 흐름을 바탕으로 행운의 숫자를 산출하는 전문 숫자 분석가입니다."
+    
+    prompt_content = (
+        "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표', '줄바꿈' 기호만 사용하여 답변을 작성하세요. "
+        "절대로 인사말, 사주 풀이 설명, 마크다운(###, **, -) 등의 일반 텍스트를 포함해서는 안 됩니다.\n\n"
+        f"[사용자 정보]\n- 이름: {name}\n- 성별: {gender}\n- 생년월일: {birthdate} ({calendarType})\n- 출생시간: {birthTime}\n- 집중오행기운: {fiveElements}\n\n"
+        "[출력 형식 및 제한 요구사항]\n1. 사용자의 사주 음양오행과 집중 기운을 참고하여 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
+        "2. 총 5줄(5게임, 총 30개 숫자)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
+        "3. 각 줄의 숫자는 쉼표(,)로만 구분되어야 합니다.\n"
+        "4. ★중요: 각 줄의 숫자 6개는 절대로 작은 수부터 정렬(1, 2, 3...)하지 말고, 무작위로 추출된 천기의 순서 그대로 뒤섞어 출력해야 합니다.\n\n"
+        "[올바른 출력 예시]\n42,7,19,3,32,11\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
+    )
+
+    try:
+        # 2. OpenAI API 호출
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",  # 사용하는 모델명 지정 (예: gpt-4o, gpt-4, gpt-3.5-turbo 등)
+            messages=[
+                {"role": "system", "content": system_role},
+                {"role": "user", "content": prompt_content}
+            ],
+            temperature=0.8
+        )
+        
+        # AI 생성 결과 추출
+        lotto_result = response.choices[0].message.content.strip()
+
+    except Exception as e:
+        lotto_result = f"AI 번호 생성 중 오류가 발생했습니다: {str(e)}"
+
+    # 3. 세션 또는 기존 사용자 정보 바인딩 (Templates 응답 처리)
+    user_data = request.session.get("user")  # 기존 세션 구현 방식에 맞춰 수정 가능
+
+    return templates.TemplateResponse(
+        "lotto.html",
+        {
+            "request": request,
+            "user": user_data,
+            "result": lotto_result,
+            "service_title": service_title
+        }
+    )
