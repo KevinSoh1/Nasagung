@@ -733,7 +733,7 @@ async def lotto_page(
     )
     
 # ==========================================
-# [결재하기] pay_popup.html처리
+# [결제하기] pay_popup.html 처리
 # ==========================================
 @app.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
 async def pay_popup(
@@ -766,7 +766,7 @@ async def pay_popup(
             cursor = None
             try:
                 new_point = current_point - PRICE
-                target_id = f"lotto_{int(time.time())}"
+                target_id = int(time.time())  # target_id를 정수(타임스탬프)로 처리
                 
                 # DB 커서(Cursor) 생성
                 cursor = db.cursor()
@@ -786,10 +786,10 @@ async def pay_popup(
                 db.commit()
 
                 pay_success = True
-                current_point = new_point  # 화면 표시용 변수 갱신
+                current_point = new_point  # 💥 차감된 포인트로 갱신하여 템플릿에 전달
                 
             except Exception as e:
-                db.rollback()  # 오류 발생 시 되돌리기
+                db.rollback()
                 logger.error(f"Payment error: {str(e)}")
                 msg = "결제 처리 중 오류가 발생했습니다."
             finally:
@@ -801,7 +801,7 @@ async def pay_popup(
         request=request,
         name="pay_popup.html",
         context={
-            "user_point": current_point,
+            "user_point": current_point,  # 차감 후 변경된 current_point가 들어갑니다.
             "price": PRICE,
             "pay_success": pay_success,
             "msg": msg
