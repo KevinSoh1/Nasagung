@@ -759,9 +759,9 @@ async def pay_popup(
 
     # 2. 결제 버튼 클릭 시 (POST)
     if request.method == "POST" and action_pay == "1":
-    if current_point < PRICE:
+      if current_point < PRICE:
         msg = "보유 포인트가 부족합니다. 충전 후 이용해 주세요."
-    else:
+      else:
         try:
             new_point = current_point - PRICE
             target_id = f"lotto_{int(time.time())}"
