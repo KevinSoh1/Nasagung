@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -220,50 +220,45 @@
                     <span style="color: #666; font-weight: 600; font-size: 1.05rem; text-align: center;">하단의 추출 버튼을 클릭하면 AI 분석 행운의 공들이 나타납니다.</span>
                 </div>
 
-                <form id="lottoForm">
+                <form id="lottoForm" action="/lotto" method="POST">
                     <div class="form-grid">
                         <div class="saju-grid-custom">
                             <div class="form-group">
                                 <label>이름</label>
-                                <!-- DB field: user.name -->
                                 <input type="text" id="userName" name="name" placeholder="이름" value="{{ user.name if user and user.name else '' }}" style="max-width: 180px;" required>
                             </div>
 
                             <div class="form-group">
                                 <label>생년월일 (년 / 월-일)</label>
                                 <div class="birth-date-group">
-                                    <!-- DB field: user.birthyear (1970) -->
                                     <input type="number" id="birthYear" name="birthYear" placeholder="년(4자리)" min="1900" max="2030" value="{{ user.birthyear if user and user.birthyear else '' }}" style="width: 85%;" required>
-                                    <!-- DB field: user.birthday (10-21) -->
                                     <input type="text" id="birthDay" name="birthDay" placeholder="MM-DD" pattern="\d{2}-\d{2}" title="05-18 형태로 입력하세요" value="{{ user.birthday if user and user.birthday else '' }}" style="width: 75%;" required>
                                 </div>
                             </div>
                             
                             <div class="form-group">
                                 <label>출생 시간 (12지시)</label>
-                                <!-- DB field: user.birthtime ('子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥' 또는 '巳(사)' 형태 대응) -->
-            				<select name="birthtime" required>
-                				<option value="">시간 선택</option>
-                					{% set u_time = user.birthtime if user and user.birthtime else '' %}
-                					<option value="子(자)" {{ 'selected' if '子(자)' in u_time else '' }}>子(자)(23:30 ~ 01:29)</option>
-                					<option value="丑(축)" {{ 'selected' if '丑(축)' in u_time else '' }}>丑(축)(01:30 ~ 03:29)</option>
-                					<option value="寅(인)" {{ 'selected' if '寅(인)' in u_time else '' }}>寅(인)(03:30 ~ 05:29)</option>
-                					<option value="卯(묘)" {{ 'selected' if '卯(묘)' in u_time else '' }}>卯(묘)(05:30 ~ 07:29)</option>
-                					<option value="辰(진)" {{ 'selected' if '辰(진)' in u_time else '' }}>辰(진)(07:30 ~ 09:29)</option>
-                					<option value="巳(사)" {{ 'selected' if '巳(사)' in u_time else '' }}>巳(사)(09:30 ~ 11:29)</option>
-                					<option value="午(오)" {{ 'selected' if '午(오)' in u_time else '' }}>午(오)(11:30 ~ 13:29)</option>
-                					<option value="未(미)" {{ 'selected' if '未(미)' in u_time else '' }}>未(미)(13:30 ~ 15:29)</option>
-                					<option value="申(신)" {{ 'selected' if '申(신)' in u_time else '' }}>申(신)(15:30 ~ 17:29)</option>
-                					<option value="酉(유)" {{ 'selected' if '酉(유)' in u_time else '' }}>酉(유)(17:30 ~ 19:29)</option>
-                					<option value="戌(술)" {{ 'selected' if '戌(술)' in u_time else '' }}>戌(술)(19:30 ~ 21:29)</option>
-                					<option value="亥(해)" {{ 'selected' if '亥(해)' in u_time else '' }}>亥(해)(21:30 ~ 23:29)</option>
-            				</select>
+                                <select name="birthTime" required>
+                                    <option value="">시간 선택</option>
+                                    {% set u_time = user.birthtime if user and user.birthtime else '' %}
+                                    <option value="子(자)" {{ 'selected' if '子' in u_time else '' }}>子(자)(23:30 ~ 01:29)</option>
+                                    <option value="丑(축)" {{ 'selected' if '丑' in u_time else '' }}>丑(축)(01:30 ~ 03:29)</option>
+                                    <option value="寅(인)" {{ 'selected' if '寅' in u_time else '' }}>寅(인)(03:30 ~ 05:29)</option>
+                                    <option value="卯(묘)" {{ 'selected' if '卯' in u_time else '' }}>卯(묘)(05:30 ~ 07:29)</option>
+                                    <option value="辰(진)" {{ 'selected' if '辰' in u_time else '' }}>辰(진)(07:30 ~ 09:29)</option>
+                                    <option value="巳(사)" {{ 'selected' if '巳' in u_time else '' }}>巳(사)(09:30 ~ 11:29)</option>
+                                    <option value="午(오)" {{ 'selected' if '午' in u_time else '' }}>午(오)(11:30 ~ 13:29)</option>
+                                    <option value="未(미)" {{ 'selected' if '未' in u_time else '' }}>未(미)(13:30 ~ 15:29)</option>
+                                    <option value="申(신)" {{ 'selected' if '申' in u_time else '' }}>申(신)(15:30 ~ 17:29)</option>
+                                    <option value="酉(유)" {{ 'selected' if '酉' in u_time else '' }}>酉(유)(17:30 ~ 19:29)</option>
+                                    <option value="戌(술)" {{ 'selected' if '戌' in u_time else '' }}>戌(술)(19:30 ~ 21:29)</option>
+                                    <option value="亥(해)" {{ 'selected' if '亥' in u_time else '' }}>亥(해)(21:30 ~ 23:29)</option>
+                                </select>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>성별</label>
-                            <!-- DB field: user.gender ('male' / 'female' 또는 '남성' / '여성') -->
                             {% set user_gender = user.gender if user and user.gender else 'male' %}
                             <input type="hidden" name="gender" id="genderValue" value="{{ '여성' if user_gender in ['female', '여성'] else '남성' }}">
 		
@@ -275,7 +270,6 @@
 
                         <div class="form-group">
                             <label>캘린더 선택</label>
-                            <!-- DB field: user.calendarType ("양력", "음력", "음력-평달", "음력-윤달") -->
                             <select name="calendarType" id="calendarType" required>
                                 {% set u_cal = user.calendarType if user and user.calendarType else '양력' %}
                                 <option value="양력" {{ 'selected' if u_cal == '양력' else '' }}>양력 (Solar)</option>
@@ -347,137 +341,84 @@ genderBtns.forEach(function(btn) {
     });
 });
 
-// Jinja2 템플릿의 user 객체 유무로 로그인 여부 판별
 const isMember = {{ 'true' if user else 'false' }};
 let globalGamesData = [];
 
-function completePayment() {
-    const noticeBox = document.querySelector('.lotto-notice-box');
-    if (noticeBox) noticeBox.remove();
-    renderRemainingGames(); 
-}
+// 서버에서 전달된 로또 생성 결과 문자열 (POST 요청 후 전달받음)
+const serverResult = `{{ result if result else '' }}`;
 
-document.getElementById('lottoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const container = document.getElementById('lottoContainer');
-    const btnSubmit = document.getElementById('btnExtract');
-    
-    const name = document.getElementById('userName').value;
-    const birthYear = document.getElementById('birthYear').value;
-    const birthDay = document.getElementById('birthDay').value;
-    const birthTime = document.getElementById('birthTime').value;
-    const gender = document.getElementById('genderValue').value;
-    const calendarType = document.getElementById('calendarType').value;
-    const fiveElements = document.getElementById('fiveElements').value;
-    
-    const formattedBirthDate = `${birthYear}-${birthDay}`;
-
-    btnSubmit.disabled = true;
-    btnSubmit.innerText = "천기 기운으로 AI 번호를 산출하는 중...";
-    container.innerHTML = '';
-
-    const requestData = {
-        name: name,
-        gender: gender, 
-        birthdate: formattedBirthDate,
-        birthtime: birthTime,
-        calendarType: calendarType,
-        productID: "lotto",
-        fiveElements: fiveElements
-    };
-
-    fetch("http://219.248.39.171:8000/nasagung/analyze", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.error) {
-            alert(data.error);
-            resetSubmitButton();
-            return;
-        }
-
-        const aiText = data.result;
-        globalGamesData = []; 
-
-        const lines = aiText.split('\n');
-        for (let idx = 0; idx < lines.length; idx++) {
-            const line = lines[idx];
-            const lineNumbers = line.match(/\d+/g);
-            if (lineNumbers) {
-                const validNumbers = [];
-                for (let k = 0; k < lineNumbers.length; k++) {
-                    const num = Number(lineNumbers[k]);
-                    if (num >= 1 && num <= 45) {
-                        validNumbers.push(num);
-                    }
-                }
-                if (validNumbers.length === 6) {
-                    globalGamesData.push(validNumbers);
-                }
-            }
-        }
-        
-        if (globalGamesData.length === 0) {
-            const rawNumbers = aiText.match(/\d+/g);
-            if (rawNumbers) {
-                const fallbackNums = [];
-                for (let x = 0; x < rawNumbers.length; x++) {
-                    const n = Number(rawNumbers[x]);
-                    if (n >= 1 && n <= 45) fallbackNums.push(n);
-                }
-                for (let i = 0; i < fallbackNums.length; i += 6) {
-                    let chunk = fallbackNums.slice(i, i + 6);
-                    if (chunk.length === 6) {
-                        globalGamesData.push(chunk);
-                    }
-                }
-            }
-        }
-
-        if (globalGamesData.length > 5) {
-            globalGamesData = globalGamesData.slice(0, 5);
-        }
-
-        if (globalGamesData.length === 0) {
-            alert("유효한 로또 게임 번호가 생성되지 않았습니다.");
-            resetSubmitButton();
-            return;
-        }
-
-        renderLottoGameRow(globalGamesData[0], 1, 0);
-
-        setTimeout(function() {
-            const noticeDiv = document.createElement('div');
-            noticeDiv.className = 'lotto-notice-box';
-            
-            if (!isMember) {
-                noticeDiv.className += ' notice-guest';
-                noticeDiv.innerHTML = '⚠️ 비회원은 맛보기용 1게임만 제공됩니다.<br>전체 5게임 조합 및 천기 분석 결과를 보시려면<br><a href="register.html">회원가입</a>을 진행해 주세요.';
-            } else {
-                noticeDiv.className += ' notice-member';
-                noticeDiv.innerHTML = '🔒 회원은 기본 1게임이 무료 제공됩니다.<br>나머지 대박 추천 조합을 모두 열람하시려면<br><span onclick="openPaymentPopup()">[구매하기]</span>를 완료해 주세요.';
-            }
-            container.appendChild(noticeDiv);
-            resetSubmitButton();
-        }, 80 * 6 + 200);
-    })
-    .catch(function(err) {
-        console.error(err);
-        alert("서버 통신 중 오류가 발생했습니다.");
-        resetSubmitButton();
-    });
-
-    function resetSubmitButton() {
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = "천기운集 AI 번호 다시 추출하기 ➔";
+document.addEventListener("DOMContentLoaded", function() {
+    if (serverResult && serverResult.trim() !== '') {
+        processLottoResult(serverResult);
     }
 });
+
+function processLottoResult(aiText) {
+    const container = document.getElementById('lottoContainer');
+    container.innerHTML = '';
+    globalGamesData = []; 
+
+    const lines = aiText.split('\n');
+    for (let idx = 0; idx < lines.length; idx++) {
+        const line = lines[idx];
+        const lineNumbers = line.match(/\d+/g);
+        if (lineNumbers) {
+            const validNumbers = [];
+            for (let k = 0; k < lineNumbers.length; k++) {
+                const num = Number(lineNumbers[k]);
+                if (num >= 1 && num <= 45) {
+                    validNumbers.push(num);
+                }
+            }
+            if (validNumbers.length === 6) {
+                globalGamesData.push(validNumbers);
+            }
+        }
+    }
+    
+    if (globalGamesData.length === 0) {
+        const rawNumbers = aiText.match(/\d+/g);
+        if (rawNumbers) {
+            const fallbackNums = [];
+            for (let x = 0; x < rawNumbers.length; x++) {
+                const n = Number(rawNumbers[x]);
+                if (n >= 1 && n <= 45) fallbackNums.push(n);
+            }
+            for (let i = 0; i < fallbackNums.length; i += 6) {
+                let chunk = fallbackNums.slice(i, i + 6);
+                if (chunk.length === 6) {
+                    globalGamesData.push(chunk);
+                }
+            }
+        }
+    }
+
+    if (globalGamesData.length > 5) {
+        globalGamesData = globalGamesData.slice(0, 5);
+    }
+
+    if (globalGamesData.length === 0) {
+        alert("유효한 로또 게임 번호가 생성되지 않았습니다.");
+        return;
+    }
+
+    // 맛보기 1게임만 애니메이션 표시
+    renderLottoGameRow(globalGamesData[0], 1, 0);
+
+    setTimeout(function() {
+        const noticeDiv = document.createElement('div');
+        noticeDiv.className = 'lotto-notice-box';
+        
+        if (!isMember) {
+            noticeDiv.className += ' notice-guest';
+            noticeDiv.innerHTML = '⚠️ 비회원은 맛보기용 1게임만 제공됩니다.<br>전체 5게임 조합 및 천기 분석 결과를 보시려면<br><a href="/register">회원가입</a>을 진행해 주세요.';
+        } else {
+            noticeDiv.className += ' notice-member';
+            noticeDiv.innerHTML = '🔒 회원은 기본 1게임이 무료 제공됩니다.<br>나머지 대박 추천 조합을 모두 열람하시려면<br><span onclick="openPaymentPopup()">[구매하기]</span>를 완료해 주세요.';
+        }
+        container.appendChild(noticeDiv);
+    }, 80 * 6 + 200);
+}
 
 function renderLottoGameRow(numbers, gameIndex, startDelay) {
     const container = document.getElementById('lottoContainer');
@@ -521,6 +462,12 @@ function renderRemainingGames() {
         renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
         currentDelay += 480; 
     }
+}
+
+function completePayment() {
+    const noticeBox = document.querySelector('.lotto-notice-box');
+    if (noticeBox) noticeBox.remove();
+    renderRemainingGames(); 
 }
 
 function openPaymentPopup() {
