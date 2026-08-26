@@ -62,8 +62,18 @@ KAKAO_CLIENT_SECRET = 'OSyIzzbnv0QK5OxoTDRUlNTt62Cu2Bab'
 KAKAO_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=kakao'
 
 # OpenAI 클라이언트 초기화 (Render 환경 변수 OPENAI_API_KEY 사용)
+# client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# OpenAI API 키 로드
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY) 
+
+# API 키가 제대로 설정되었는지 로그로 확인 (보안을 위해 일부만 출력)
+if not OPENAI_API_KEY:
+    logger.error("? OPENAI_API_KEY가 설정되지 않았습니다. Environment 변수를 확인하세요.")
+else:
+    logger.info(f"? OPENAI_API_KEY 로드 완료 (Prefix: {OPENAI_API_KEY[:7]}...)")
+
+# OpenAI 클라이언트 생성
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Render 환경 변수 로드
 RAW_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
