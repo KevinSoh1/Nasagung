@@ -730,3 +730,59 @@ async def lotto_page(
             "service_title": service_title
         }
     )
+    
+# ==========================================
+# [결재하기] pay_popup.html처리
+# ==========================================
+@app.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
+async def pay_popup(
+    request: Request,
+    action_pay: Optional[str] = Form(None),
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db)
+):
+    # 1. 로그인 여부 확인
+    current_user = get_current_user(user_email, db) if user_email else None
+    
+    if not current_user:
+        return HTMLResponse(
+            "<script>alert('로그인이 필요한 서비스입니다.'); window.close();</script>"
+        )
+
+    PRICE = 500
+    msg = ""
+    pay_success = False
+    
+    # DB에서 사용자의 보유 포인트 가져오기
+    current_point = getattr(current_user, 'current_point', 0) if hasattr(current_user, 'current_point') else current_user.get('current_point', 0)
+    current_point = int(current_point or 0)
+
+    # 2. 결제 버튼 클릭 시 (POST)
+    if request.method == "POST" and action_pay == "1":
+        if current_point < PRICE:
+            msg = "보유 포인트가 부족합니다. 충전 후 이용해 주세요."
+        else:
+            try:
+                new_point = current_point - PRICE
+                target_id = f"lotto_{int(time.time())}"
+                
+                # DB 포인트 차감 및 히스토리 기록 로직 실행
+                # ... (DB 처리 코드) ...
+                
+                pay_success = True
+                current_point = new_point
+            except Exception as e:
+                logger.error(f"Payment error: {str(e)}")
+                msg = "결제 처리 중 오류가 발생했습니다."
+
+    # 3. templates/pay_popup.html 렌더링
+    return templates.TemplateResponse(
+        request=request,
+        name="pay_popup.html",
+        context={
+            "user_point": current_point,
+            "price": PRICE,
+            "pay_success": pay_success,
+            "msg": msg
+        }
+    )
