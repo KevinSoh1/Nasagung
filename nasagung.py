@@ -731,6 +731,7 @@ async def lotto_page(
             "service_title": service_title
         }
     )
+    
 # ==========================================
 # [결재하기] pay_popup.html처리
 # ==========================================
@@ -759,45 +760,41 @@ async def pay_popup(
 
     # 2. 결제 버튼 클릭 시 (POST)
     if request.method == "POST" and action_pay == "1":
-      if current_point < PRICE:
-        msg = "보유 포인트가 부족합니다. 충전 후 이용해 주세요."
-      else:
-        try:
-            new_point = current_point - PRICE
-            target_id = f"lotto_{int(time.time())}"
-            
-            # 1. nasagung_users 테이블 포인트 차감 (객체 상태 변경)
-            if isinstance(current_user, dict):
-                # Dict 형태로 관리하는 경우 SQL 직접 실행
-                db.execute(
-                    text("UPDATE nasagung_users SET current_point = :new_point WHERE email = :email"),
-                    {"new_point": new_point, "email": user_email}
-                )
-            else:
-                # SQLAlchemy Model 객체인 경우
-                current_user.current_point = new_point
+        if current_point < PRICE:
+            msg = "보유 포인트가 부족합니다. 충전 후 이용해 주세요."
+        else:
+            cursor = None
+            try:
+                new_point = current_point - PRICE
+                target_id = f"lotto_{int(time.time())}"
+                
+                # DB 커서(Cursor) 생성
+                cursor = db.cursor()
 
-            # 2. point_history 테이블 내역 추가
-            history_sql = text("""
-                INSERT INTO point_history (email, type, amount, description, target_id, created_at)
-                VALUES (:email, 'use', :amount, 'AI 로또 예측 번호 전체 해금 구매', :target_id, NOW())
-            """)
-            db.execute(history_sql, {
-                "email": user_email,
-                "amount": PRICE,
-                "target_id": target_id
-            })
+                # 1. nasagung_users 테이블 포인트 차감
+                update_user_sql = "UPDATE nasagung_users SET current_point = %s WHERE email = %s"
+                cursor.execute(update_user_sql, (new_point, user_email))
 
-            # 💥 3. DB 변경사항 최종 커밋 (반드시 필요!)
-            db.commit()
+                # 2. point_history 테이블 내역 추가
+                insert_history_sql = """
+                    INSERT INTO point_history (email, type, amount, description, target_id, created_at)
+                    VALUES (%s, 'use', %s, 'AI 로또 예측 번호 전체 해금 구매', %s, NOW())
+                """
+                cursor.execute(insert_history_sql, (user_email, PRICE, target_id))
 
-            pay_success = True
-            current_point = new_point  # 화면 표시용 변수 갱신
-            
-        except Exception as e:
-            db.rollback()  # 오류 발생 시 되돌리기
-            logger.error(f"Payment error: {str(e)}")
-            msg = "결제 처리 중 오류가 발생했습니다."
+                # 3. DB 변경사항 커밋
+                db.commit()
+
+                pay_success = True
+                current_point = new_point  # 화면 표시용 변수 갱신
+                
+            except Exception as e:
+                db.rollback()  # 오류 발생 시 되돌리기
+                logger.error(f"Payment error: {str(e)}")
+                msg = "결제 처리 중 오류가 발생했습니다."
+            finally:
+                if cursor:
+                    cursor.close()
 
     # 3. templates/pay_popup.html 렌더링
     return templates.TemplateResponse(
