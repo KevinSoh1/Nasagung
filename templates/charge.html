@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나사궁 - 포인트 충전</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --accent-gold: #cfb53b;
+            --white: #ffffff;
+            --text-muted: #bdc3c7;
+        }
+
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background: var(--bg-dark); 
+            color: var(--white); 
+            padding: 20px;
+            margin: 0;
+        }
+
+        .quick-item-charge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(207, 181, 59, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .charge-title {
+            font-size: 1.4rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .balance-box {
+            background: rgba(207, 181, 59, 0.08);
+            border: 1px solid rgba(207, 181, 59, 0.3);
+            border-radius: 10px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .balance-box span { font-size: 0.85rem; color: var(--text-muted); }
+        .balance-box .amount { font-size: 1.1rem; font-weight: 700; color: var(--accent-gold); }
+
+        .step-label { font-size: 0.9rem; font-weight: 600; color: var(--white); }
+
+        .p-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .p-option input[type="radio"] { display: none; }
+        .p-label {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .p-label:hover { border-color: rgba(207, 181, 59, 0.4); }
+        .p-option input[type="radio"]:checked + .p-label {
+            border-color: var(--accent-gold);
+            background: rgba(207, 181, 59, 0.12);
+        }
+
+        .p-title { font-size: 1rem; font-weight: 700; color: var(--white); }
+        .p-option input[type="radio"]:checked + .p-label .p-title { color: var(--accent-gold); }
+        .p-price { font-size: 0.8rem; color: var(--text-muted); }
+        
+        .b-badge {
+            background: #e74c3c; color: white; font-size: 0.65rem; padding: 1px 5px; border-radius: 10px; margin-bottom: 4px; font-weight: 600;
+        }
+
+        .m-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .m-option input[type="radio"] { display: none; }
+        .m-label {
+            display: block; text-align: center; padding: 10px; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: 0.2s;
+        }
+        .m-label:hover { border-color: rgba(255,255,255,0.2); }
+        .m-option input[type="radio"]:checked + .m-label { border-color: var(--white); background: rgba(255, 255, 255, 0.15); font-weight: 600; }
+
+        .total-box {
+            border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .total-box .total-lbl { font-size: 0.9rem; color: var(--text-muted); }
+        .total-box .total-val { font-size: 1.3rem; font-weight: 700; color: var(--accent-gold); }
+
+        .btn-charge-submit {
+            background: var(--accent-gold); color: #000; border: none; padding: 12px;
+            border-radius: 6px; font-size: 1rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s;
+        }
+        .btn-charge-submit:hover { background: #b89e2b; }
+    </style>
+</head>
+<body>
+
+<form id="pointChargeForm">
+    <div class="quick-item-charge">
+        <div class="charge-title">포인트 충전소</div>
+        
+        <div class="balance-box">
+            <span>현재 보유 포인트 : </span>
+            <span class="amount" id="user-current-point">{{ "{:,}".format(user_point | default(0)) }} P</span>
+        </div>
+
+        <div class="step-label">충전 금액 선택</div>
+        <div class="p-grid">
+            <div class="p-option">
+                <input type="radio" name="point_amount" id="side_p1" value="5000" data-price="5000" checked>
+                <label for="side_p1" class="p-label">
+                    <div class="p-title">5,000 P</div>
+                    <div class="p-price">5,000 원</div>
+                </label>
+            </div>
+
+            <div class="p-option">
+                <input type="radio" name="point_amount" id="side_p2" value="10000" data-price="10000">
+                <label for="side_p2" class="p-label">
+                    <div class="p-title">10,000 P</div>
+                    <div class="p-price">10,000 원</div>
+                </label>
+            </div>
+
+            <div class="p-option">
+                <input type="radio" name="point_amount" id="side_p3" value="33000" data-price="30000">
+                <label for="side_p3" class="p-label">
+                    <span class="b-badge">+10% 보너스</span>
+                    <div class="p-title">33,000 P</div>
+                    <div class="p-price">30,000 원</div>
+                </label>
+            </div>
+
+            <div class="p-option">
+                <input type="radio" name="point_amount" id="side_p4" value="57500" data-price="50000">
+                <label for="side_p4" class="p-label">
+                    <span class="b-badge">+15% 보너스</span>
+                    <div class="p-title">57,500 P</div>
+                    <div class="p-price">50,000 원</div>
+                </label>
+            </div>
+        </div>
+
+        <div class="step-label">결제 수단 선택</div>
+        <div class="m-group">
+            <div class="m-option">
+                <input type="radio" name="pay_method" id="side_m1" value="카드" checked>
+                <label for="side_m1" class="m-label">신용카드</label>
+            </div>
+            <div class="m-option">
+                <input type="radio" name="pay_method" id="side_m2" value="가상계좌">
+                <label for="side_m2" class="m-label">가상계좌</label>
+            </div>
+            <div class="m-option">
+                <input type="radio" name="pay_method" id="side_m3" value="휴대폰">
+                <label for="side_m3" class="m-label">휴대폰</label>
+            </div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-lbl">최종 결제 금액</div>
+            <div class="total-val" id="sideDisplayTotalPrice">5,000 원</div>
+        </div>
+
+        <button type="submit" class="btn-charge-submit">안전하게 결제하기</button>
+    </div>
+</form>
+
+<script>
+    const userEmail = "{{ user_email }}";
+
+    // 금액 라디오 버튼 변경 이벤트
+    const pointRadios = document.querySelectorAll('input[name="point_amount"]');
+    const displayPrice = document.getElementById('sideDisplayTotalPrice');
+
+    pointRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const price = parseInt(this.getAttribute('data-price'));
+            displayPrice.textContent = price.toLocaleString() + " 원";
+        });
+    });
+
+    // 결제 버튼 서브밋 이벤트
+    document.getElementById('pointChargeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        payMent();
+    });
+
+    function payMent() {
+        const selectedRadio = document.querySelector('input[name="point_amount"]:checked');
+        const selectedPrice = parseInt(selectedRadio.getAttribute('data-price'));
+        const selectedPoint = parseInt(selectedRadio.value);
+        const selectedMethod = document.querySelector('input[name="pay_method"]:checked').value;
+
+        const clientKey = "test_ck_LkKEypNArWWQKLKPGbRjrlmeaxYG";
+        const tossPayments = TossPayments(clientKey);
+        const orderId = "order_" + new Date().getTime();
+
+        tossPayments.requestPayment(selectedMethod, {
+            amount: selectedPrice,
+            orderId: orderId,
+            orderName: `포인트 충전 (${selectedPoint.toLocaleString()}P)`,
+            successUrl: `${window.location.origin}/charge/success?user_email=${encodeURIComponent(userEmail)}&amount=${selectedPoint}`,
+            failUrl: `${window.location.origin}/charge/fail`
+        });
+    }
+</script>
+
+</body>
+</html>
