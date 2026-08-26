@@ -32,7 +32,7 @@
             <!-- 로그인 되었을 때 표시 영역 -->
             <div class="user-info-text text-end me-2" style="font-size: 0.85rem; line-height: 1.3; color: #fff;">
                 <div><strong style="color: var(--accent-gold, #cfb53b);">{{ user.name }}</strong>님 반갑습니다</div>
-                <div style="font-size: 0.8rem; opacity: 0.9;">현재 포인트 : <strong>{{ "{:,}".format(user.current_point | default(0)) }}</strong> P</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">현재 포인트 : <strong id="top-user-point" class="gold-txt">{{ "{:,}".format(user.current_point | default(0)) }}</strong> P</div>
             </div>
             
             <a href="/mypage"><button class="btn-mypage" style="background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 5px; font-size: 0.85rem; cursor: pointer;">마이페이지</button></a>
@@ -47,3 +47,13 @@
         </div>
     </div>
 </header>
+
+<script>
+<!--  외부(팝업창 등)에서 포인트를 전달받아 UI를 즉시 업데이트하는 함수 -->
+function updateTopPoint(newPoint) {
+    const pointElement = document.getElementById("top-user-point");
+    if (pointElement) {
+        pointElement.innerText = Number(newPoint).toLocaleString();  <!-- 숫자 천단위 콤마 표기 -->
+    }
+}
+</script>
