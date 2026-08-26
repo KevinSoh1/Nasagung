@@ -41,6 +41,7 @@ images_dir = os.path.join(static_dir, "images")
 for folder in [static_dir, UPLOAD_DIR, images_dir]:
     os.makedirs(folder, exist_ok=True)
 
+# static 디렉토리 매핑 설정
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # CORS 에러 방지 설정
