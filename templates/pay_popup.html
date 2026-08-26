@@ -15,23 +15,24 @@
 </head>
 <body>
 
-    <h4 class="fw-bold gold-txt mb-3">?? AI 행운의 번호 전체 열람</h4>
+    <h4 class="fw-bold gold-txt mb-3">AI 행운의 번호 전체 열람</h4>
     <p class="small text-white-50">천기의 기운을 담아 생성된 나머지 로또 조합을 모두 잠금 해제합니다.</p>
 
     {% if pay_success %}
         <div class="pay-box mt-4">
-            <h5 class="fw-bold text-success mb-3">? 결제가 완료되었습니다!</h5>
+            <h5 class="fw-bold text-success mb-3">결제가 완료되었습니다!</h5>
             <p class="small">분석 페이지에서 번호 조합 출력을 순차적으로 진행합니다.</p>
         </div>
-        <script>
-            // 부모창(lotto.html)의 completePayment() 함수 실행 후 팝업 창 닫기
+       <script>
+        // 1. 결제 완료 후 부모 창(lotto.html / TopMenu) 자동 새로고침
             if (window.opener && !window.opener.closed) {
-                window.opener.completePayment();
+                window.opener.location.reload();
             }
+        // 2. 1초 뒤 팝업창 스스로 닫기
             setTimeout(function() {
                 window.close();
-            }, 1200);
-        </script>
+            }, 1000);
+       </script>
     {% else %}
         <div class="pay-box">
             <div class="d-flex justify-content-between mb-2">
