@@ -49,11 +49,15 @@
 </header>
 
 <script>
-<!--  외부(팝업창 등)에서 포인트를 전달받아 UI를 즉시 업데이트하는 함수 -->
+// 외부(팝업창 등)에서 포인트를 전달받아 UI를 즉시 업데이트하는 함수
 function updateTopPoint(newPoint) {
     const pointElement = document.getElementById("top-user-point");
     if (pointElement) {
-        pointElement.innerText = Number(newPoint).toLocaleString();  <!-- 숫자 천단위 콤마 표기 -->
+        // 숫자 천단위 콤마 표기
+        pointElement.innerText = Number(newPoint).toLocaleString();
     }
 }
+
+// 팝업창에서 window.opener.updateTopPoint()를 즉시 찾을 수 있도록 전역 명시
+window.updateTopPoint = updateTopPoint;
 </script>
