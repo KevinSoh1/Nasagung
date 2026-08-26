@@ -36,7 +36,7 @@
             </div>
             
             <a href="/mypage"><button class="btn-mypage" style="background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 5px; font-size: 0.85rem; cursor: pointer;">마이페이지</button></a>
-            <a href="/charge"><button class="btn-charge" style="background: var(--accent-gold, #cfb53b); border: none; color: #000; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; cursor: pointer;">포인트 충전</button></a>
+            <a href="/charge"><button class="btn-charge" onclick="window.open('/charge', 'chargePopup', 'width=480,height=650,scrollbars=yes');" style="background: var(--accent-gold, #cfb53b); border: none; color: #000; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; cursor: pointer;">포인트 충전</button></a>
             <a href="/logout"><button class="btn-logout" style="background: #e74c3c; border: none; color: #fff; padding: 6px 12px; border-radius: 5px; font-size: 0.85rem; cursor: pointer;">로그아웃</button></a>
             
             {% else %}
