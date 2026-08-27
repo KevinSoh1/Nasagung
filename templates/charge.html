@@ -14,12 +14,27 @@
             --text-muted: #bdc3c7;
         }
 
-        body { 
-            font-family: 'Pretendard', sans-serif; 
-            background: var(--bg-dark); 
-            color: var(--white); 
-            padding: 20px;
-            margin: 0;
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg-dark);
+            color: var(--white);
+            overflow-x: hidden;
+            overflow-y: auto; /* 내용이 길어질 경우 수직 스크롤 허용 */
+        }
+
+        .hero {
+            min-height: 100vh;
+            padding-top: 30px;    /* 기존 120px에서 팝업용으로 축소 */
+            padding-bottom: 30px;
+        }
+
+        .hero-content {
+            max-width: 100%;
+            padding: 10px 20px;
+        }
+
+        .quick-menu {
+            max-width: 100%;       /* 팝업 너비 전체 활용 */
         }
 
         .quick-item-charge {
