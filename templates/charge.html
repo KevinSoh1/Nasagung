@@ -184,7 +184,8 @@
             
                         <div class="balance-box">
                             <span>현재 보유 포인트 : </span>
-                            <span class="amount">{{ "{:,}".format(user_point | default(0)) }} P</span>
+                            <!-- <span class="amount">{{ "{:,}".format(user_point | default(0)) }} P</span> -->
+                            <span class="amount">{{ user_point | default(0) }} P</span>
                         </div>
 
                         <div class="step-label">충전 금액 선택</div>
