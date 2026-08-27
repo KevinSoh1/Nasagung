@@ -50,19 +50,21 @@
 
 <script>
 function openChargePopup() {
-    // 팝업 창 옵션 지정
-    const width = 480;
-    const height = 650;
-    const left = (window.screen.width / 2) - (width / 2);
-    const top = (window.screen.height / 2) - (height / 2);
-    
-    window.open(
-        '/charge', 
-        'ChargePopup', 
-        `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=no`
-    );
+    // 토스페이먼츠 팝업에 최적화된 크기 (가로 600px, 세로 750px)
+    const width = 600;
+    const height = 750;
+
+    // 화면 중앙에 팝업 위치시키기 계산
+    const left = Math.ceil((window.screen.width - width) / 2);
+    const top = Math.ceil((window.screen.height - height) / 2);
+
+    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=no`;
+
+    // 팝업 오픈
+    window.open('/charge', 'PointChargePopup', popupFeatures);
 }
-    // 외부(팝업창 등)에서 포인트를 전달받아 UI를 즉시 업데이트하는 함수
+    
+// 외부(팝업창 등)에서 포인트를 전달받아 UI를 즉시 업데이트하는 함수
 function updateTopPoint(newPoint) {
     const pointElement = document.getElementById("top-user-point");
     if (pointElement) {
