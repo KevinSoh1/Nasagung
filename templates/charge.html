@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나사궁 - 포인트 충전소</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 토스페이먼츠 v1 SDK -->
     <script src="https://js.tosspayments.com/v1/payment"></script>
     <style>
-        a {
-            text-decoration: none;
-            color: black;
-        }
+        a { text-decoration: none; color: black; }
         a:visited { color: black; }
         a:hover { color: gray; }
         a:active { color: black; }
@@ -25,13 +21,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Pretendard', sans-serif; 
-            background: var(--bg-dark); 
-            color: var(--white); 
-            overflow-x: hidden; 
-        }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
 
         header {
             background: rgba(10, 17, 40, 0.8);
@@ -54,19 +44,13 @@
         }
 
         .hero-content { position: relative; z-index: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 40px 20px;}
-
         .intro-text { text-align: center; margin-top: 0; margin-bottom: 50px; }
         .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 3.2rem; line-height: 1.3; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
         .intro-text .highlight { color: var(--accent-gold); }
         .intro-text p { color: var(--text-muted); font-size: 1.2rem; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }
 
         .main-content-layout { display: flex; gap: 40px; align-items: flex-start; justify-content: center; }
-
-        .quick-menu {
-            flex: 1;
-            width: 100%;
-            max-width: 450px;
-        }
+        .quick-menu { flex: 1; width: 100%; max-width: 450px; }
         
         .quick-item-charge {
             background: rgba(255, 255, 255, 0.05);
@@ -80,14 +64,7 @@
             backdrop-filter: blur(10px);
         }
 
-        .charge-title {
-            font-size: 1.4rem;
-            color: var(--accent-gold);
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 5px;
-        }
-
+        .charge-title { font-size: 1.4rem; color: var(--accent-gold); font-weight: 700; text-align: center; margin-bottom: 5px; }
         .balance-box {
             background: rgba(207, 181, 59, 0.08);
             border: 1px solid rgba(207, 181, 59, 0.3);
@@ -101,37 +78,19 @@
         .balance-box .amount { font-size: 1.1rem; font-weight: 700; color: var(--accent-gold); }
 
         .step-label { font-size: 0.9rem; font-weight: 600; color: var(--white); margin-bottom: -5px; }
-
-        .p-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
+        .p-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .p-option input[type="radio"] { display: none; }
         .p-label {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px; cursor: pointer; transition: all 0.2s ease; text-align: center;
         }
         .p-label:hover { border-color: rgba(207, 181, 59, 0.4); }
-        .p-option input[type="radio"]:checked + .p-label {
-            border-color: var(--accent-gold);
-            background: rgba(207, 181, 59, 0.12);
-        }
+        .p-option input[type="radio"]:checked + .p-label { border-color: var(--accent-gold); background: rgba(207, 181, 59, 0.12); }
         .p-title { font-size: 1rem; font-weight: 700; color: var(--white); }
         .p-option input[type="radio"]:checked + .p-label .p-title { color: var(--accent-gold); }
         .p-price { font-size: 0.8rem; color: var(--text-muted); }
-        .b-badge {
-            background: #e74c3c; color: white; font-size: 0.65rem; padding: 1px 5px; border-radius: 10px; margin-bottom: 4px; font-weight: 600;
-        }
+        .b-badge { background: #e74c3c; color: white; font-size: 0.65rem; padding: 1px 5px; border-radius: 10px; margin-bottom: 4px; font-weight: 600; }
 
         .m-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .m-option input[type="radio"] { display: none; }
@@ -142,10 +101,7 @@
         .m-label:hover { border-color: rgba(255,255,255,0.2); }
         .m-option input[type="radio"]:checked + .m-label { border-color: var(--white); background: rgba(255, 255, 255, 0.15); font-weight: 600; }
 
-        .total-box {
-            border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .total-box { border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
         .total-box .total-lbl { font-size: 0.9rem; color: var(--text-muted); }
         .total-box .total-val { font-size: 1.3rem; font-weight: 700; color: var(--accent-gold); }
 
@@ -154,12 +110,6 @@
             border-radius: 6px; font-size: 1rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s;
         }
         .btn-charge-submit:hover { background: #b89e2b; transform: translateY(-1px); }
-
-        @media (max-width: 992px) {
-            .main-content-layout { flex-direction: column; }
-            .hero { height: auto; padding: 120px 0 60px; }
-            .intro-text h1 { font-size: 2.2rem; }
-        }
     </style>
 </head>
 <body>
@@ -184,39 +134,36 @@
             
                         <div class="balance-box">
                             <span>현재 보유 포인트 : </span>
-                            <!-- <span class="amount">{{ "{:,}".format(user_point | default(0)) }} P</span> -->
-                            <span class="amount">{{ user_point | default(0) }} P</span>
+                            <!-- 💥 백엔드에서 넘겨받은 formatted_point 사용 -->
+                            <span class="amount">{{ formatted_point }} P</span>
                         </div>
 
                         <div class="step-label">충전 금액 선택</div>
                         <div class="p-grid">
                             <div class="p-option">
-                                <input type="radio" name="point_amount" id="side_p1" value="5000" data-price="1000" checked>
+                                <input type="radio" name="point_amount" id="side_p1" value="5000" data-price="5000" checked>
                                 <label for="side_p1" class="p-label">
                                     <div class="p-title">5,000 P</div>
                                     <div class="p-price">5,000 원</div>
                                 </label>
                             </div>
-
                             <div class="p-option">
-                                <input type="radio" name="point_amount" id="side_p2" value="10000" data-price="1000">
+                                <input type="radio" name="point_amount" id="side_p2" value="10000" data-price="10000">
                                 <label for="side_p2" class="p-label">
                                     <div class="p-title">10,000 P</div>
                                     <div class="p-price">10,000 원</div>
                                 </label>
                             </div>
-
                             <div class="p-option">
-                                <input type="radio" name="point_amount" id="side_p3" value="33000" data-price="1000">
+                                <input type="radio" name="point_amount" id="side_p3" value="33000" data-price="30000">
                                 <label for="side_p3" class="p-label">
                                     <span class="b-badge">+10% 보너스</span>
                                     <div class="p-title">33,000 P</div>
                                     <div class="p-price">30,000 원</div>
                                 </label>
                             </div>
-
                             <div class="p-option">
-                                <input type="radio" name="point_amount" id="side_p4" value="57500" data-price="1000">
+                                <input type="radio" name="point_amount" id="side_p4" value="57500" data-price="50000">
                                 <label for="side_p4" class="p-label">
                                     <span class="b-badge">+15% 보너스</span>
                                     <div class="p-title">57,500 P</div>
@@ -255,7 +202,6 @@
 </main>
 
 <script>
-    // 사이드바 전용 포인트 실시간 금액 포맷팅 스크립트
     const sidePointRadios = document.querySelectorAll('input[name="point_amount"]');
     const sideDisplayPrice = document.getElementById('sideDisplayTotalPrice');
 
@@ -266,7 +212,6 @@
         });
     });
 
-    // 포인트 충전소 결제 진행 스크립트
     document.getElementById('sidePointChargeForm').addEventListener('submit', function(e) {
         e.preventDefault();
         payMent();
@@ -276,7 +221,6 @@
         const emailElem = document.getElementById('email');
         const user_email = emailElem.dataset.email; 
 
-        // 선택된 충전 포인트 및 결제 금액/수단 추출
         const selectedRadio = document.querySelector('input[name="point_amount"]:checked');
         const selectedPrice = parseInt(selectedRadio.getAttribute('data-price'));
         const selectedPoint = parseInt(selectedRadio.value);
@@ -285,13 +229,9 @@
         const clientKey = "test_ck_LkKEypNArWWQKLKPGbRjrlmeaxYG";
         const tossPayments = TossPayments(clientKey);
         
-        // 고유 주문번호 생성 (타임스탬프 + 난수)
         const orderId = "order_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-
-        // 현재 웹서비스의 도메인 주소를 자동 감지 (Render 도메인 호환)
         const baseUrl = window.location.origin;
 
-        // 토스페이먼츠 결제 창 호출
         tossPayments.requestPayment(selectedMethod, {
             amount: selectedPrice,
             orderId: orderId,
