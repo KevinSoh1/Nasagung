@@ -76,3 +76,31 @@ function updateTopPoint(newPoint) {
 // 팝업창에서 window.opener.updateTopPoint()를 즉시 찾을 수 있도록 전역 명시
 window.updateTopPoint = updateTopPoint;
 </script>
+<script>
+    (function() {
+        // 1분(60초) = 60,000 밀리초
+        const INACTIVE_TIMEOUT = 60 * 1000; 
+        let timeoutTimer;
+
+        // 로그아웃 수행 함수
+        function logoutUser() {
+            alert('일정 시간 동안 활동이 없어 자동으로 로그아웃됩니다.');
+            window.location.href = '/logout';
+        }
+
+        // 타이머 리셋 함수
+        function resetTimer() {
+            clearTimeout(timeoutTimer);
+            timeoutTimer = setTimeout(logoutUser, INACTIVE_TIMEOUT);
+        }
+
+        // 사용자 활동 감지 이벤트 등록
+        const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+        events.forEach(function(event) {
+            window.addEventListener(event, resetTimer, true);
+        });
+
+        // 페이지 로드 시 타이머 시작
+        resetTimer();
+    })();
+</script>
