@@ -19,7 +19,9 @@ from openai import OpenAI
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
+# 1. Logger 설정 (누락 시 500 에러 원인)
+logger = logging.getLogger("uvicorn.error")
 
 # FastAPI 생성
 app = FastAPI()
@@ -817,26 +819,35 @@ async def charge_popup(
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # 로그인 체크
-    current_user = get_current_user(user_email, db) if user_email else None
-    if not current_user:
-        return HTMLResponse(
-            "<script>alert('로그인이 필요한 서비스입니다.'); window.close();</script>"
+    try:
+        # 로그인 체크
+        current_user = get_current_user(user_email, db) if user_email else None
+        if not current_user:
+            return HTMLResponse(
+                "<script>alert('로그인이 필요한 서비스입니다.'); window.close();</script>"
+            )
+
+        # 현재 보유 포인트 조회 (객체/딕셔너리 안전 접근)
+        current_point = 0
+        if hasattr(current_user, 'current_point'):
+            current_point = current_user.current_point
+        elif isinstance(current_user, dict):
+            current_point = current_user.get('current_point', 0)
+
+        point_val = int(current_point or 0)
+
+        return templates.TemplateResponse(
+            request=request,
+            name="charge.html",
+            context={
+                "user_email": user_email,
+                "user_point": point_val,
+                "formatted_point": f"{point_val:,}"
+            }
         )
-
-    # 현재 보유 포인트 조회
-    current_point = getattr(current_user, 'current_point', 0) if hasattr(current_user, 'current_point') else current_user.get('current_point', 0)
-    point_val = int(current_point or 0)
-
-    return templates.TemplateResponse(
-        request=request,
-        name="charge.html",
-        context={
-            "user_email": user_email,
-            "user_point": point_val,
-            "formatted_point": f"{point_val:,}"  # 백엔드에서 미리 쉼표(,) 포맷팅 처리
-        }
-    )
+    except Exception as e:
+        logger.error(f"Charge Popup Error: {str(e)}")
+        return HTMLResponse(f"<h3>500 Internal Server Error (Popup)</h3><p>{str(e)}</p>", status_code=500)
 
 # ==========================================
 # 포인트 충전 성공 처리 (/charge/success)
@@ -852,7 +863,12 @@ async def charge_success(
 ):
     cursor = None
     try:
-        cursor = db.cursor()
+        # DB 연결 타입에 따른 cursor 예외 처리
+        if hasattr(db, 'cursor'):
+            cursor = db.cursor()
+        else:
+            # SQLAlchemy Session 등 raw cursor를 추출해야 하는 경우
+            cursor = db.connection().cursor()
 
         # 1. 기존 사용자의 현재 포인트 조회
         cursor.execute("SELECT current_point FROM nasagung_users WHERE email = %s", (user_email,))
@@ -878,7 +894,7 @@ async def charge_success(
 
         db.commit()
 
-        # 4. 결제 성공 시 부모 창 포인트 업데이트 및 팝업 닫기 Script 반환
+        # 4. 결제 성공 처리 Script 반환
         return HTMLResponse(f"""
             <script>
                 alert('{amount:,} 포인트 충전이 완료되었습니다.');
@@ -894,10 +910,10 @@ async def charge_success(
         """)
 
     except Exception as e:
-        if db:
+        if hasattr(db, 'rollback'):
             db.rollback()
         logger.error(f"Charge Success Processing Error: {str(e)}")
         return HTMLResponse("<script>alert('포인트 적립 처리 중 오류가 발생했습니다.'); window.close();</script>")
     finally:
-        if cursor:
+        if cursor and hasattr(cursor, 'close'):
             cursor.close()
