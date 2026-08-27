@@ -14,36 +14,24 @@
             --text-muted: #bdc3c7;
         }
 
-       /* 팝업 전체 프레임을 화면 크기에 맞춤 */
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg-dark);
+            color: var(--white);
             overflow-x: hidden;
+            overflow-y: auto; /* 내용이 길어질 경우 수직 스크롤 허용 */
         }
 
-    /* 토스페이먼츠 모달 프레임 자동 조절 */
-        iframe[src*="tosspayments"] {
-        max-width: 100% !important;
-        width: 100% !important;
-        }
-
-    /* hero 영역 여백 축소로 결제 영역 확보 */
         .hero {
             min-height: 100vh;
-            padding: 20px 10px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding-top: 30px;    /* 기존 120px에서 팝업용으로 축소 */
+            padding-bottom: 30px;
         }
 
         .hero-content {
-            width: 100%;
-            max-width: 520px !important; /* 팝업 너비(600px) 내부 여백을 고려한 최적값 */
-            padding: 10px !important;
+            max-width: 100%;
+            padding: 10px 20px;
         }
-
         .quick-menu {
             max-width: 100%;       /* 팝업 너비 전체 활용 */
         }
