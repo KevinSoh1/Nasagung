@@ -7,8 +7,8 @@ import logging
 import pymysql
 import urllib.parse
 import requests
-from typing import Optional
 
+from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Form, Depends, UploadFile, File, Cookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -808,6 +808,14 @@ async def pay_popup(
         }
     )
 
+import time
+import logging
+from typing import Optional
+from fastapi import FastAPI, Request, Depends, Cookie
+from fastapi.responses import HTMLResponse
+
+logger = logging.getLogger(__name__)
+
 # ==========================================
 # 포인트 충전 팝업 페이지 오픈 (/charge)
 # ==========================================
@@ -826,13 +834,15 @@ async def charge_popup(
 
     # 현재 보유 포인트 조회
     current_point = getattr(current_user, 'current_point', 0) if hasattr(current_user, 'current_point') else current_user.get('current_point', 0)
+    point_val = int(current_point or 0)
 
     return templates.TemplateResponse(
         request=request,
         name="charge.html",
         context={
             "user_email": user_email,
-            "user_point": int(current_point or 0)
+            "user_point": point_val,
+            "formatted_point": f"{point_val:,}"  # 백엔드에서 미리 쉼표(,) 포맷팅 처리
         }
     )
 
@@ -892,7 +902,8 @@ async def charge_success(
         """)
 
     except Exception as e:
-        db.rollback()
+        if db:
+            db.rollback()
         logger.error(f"Charge Success Processing Error: {str(e)}")
         return HTMLResponse("<script>alert('포인트 적립 처리 중 오류가 발생했습니다.'); window.close();</script>")
     finally:
