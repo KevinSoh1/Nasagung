@@ -808,14 +808,6 @@ async def pay_popup(
         }
     )
 
-import time
-import logging
-from typing import Optional
-from fastapi import FastAPI, Request, Depends, Cookie
-from fastapi.responses import HTMLResponse
-
-logger = logging.getLogger(__name__)
-
 # ==========================================
 # 포인트 충전 팝업 페이지 오픈 (/charge)
 # ==========================================
