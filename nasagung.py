@@ -7,11 +7,12 @@ import logging
 import pymysql
 import urllib.parse
 import requests
+import openai
 
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Request, Form, Depends, UploadFile, File, Cookie
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
