@@ -204,7 +204,7 @@ async def analyze_saju(
             # 비로그인 사용자는 앞 30자만 자른 후 전달
             return JSONResponse({
                 "is_logged_in": False,
-                "result": full_result[:30]
+                "result": full_result[:150]
             })
 
     except Exception as e:
