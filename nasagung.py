@@ -212,6 +212,27 @@ async def analyze_saju(
         return JSONResponse({"error": "분석 중 오류가 발생했습니다."}, status_code=500)
 
 # ==========================================
+# Response.html 라우터 등록
+# ==========================================
+@app.get("/response.html", response_class=HTMLResponse)
+async def read_response_page(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db),
+):
+    current_user = get_current_user(user_email, db) if user_email else None
+    
+    file_path = os.path.join(templates_dir, "response.html")
+    if os.path.exists(file_path):
+        return templates.TemplateResponse(
+            request=request,
+            name="response.html",
+            context={"user": current_user, "user_email": user_email}
+        )
+    return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
+
+
+# ==========================================
 # DB 연결 테스트 전용 엔드포인트
 # ==========================================
 @app.get("/db-test")
