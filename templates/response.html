@@ -163,43 +163,14 @@
     if (!isLoggedIn) {
         formattedResult += "...<br><br>";
        formattedResult += `
-        <div style="
-            max-width: 420px;
-            margin: 20px auto 0 auto;
-            padding: 16px 20px;
-            background: rgba(207, 181, 59, 0.08);
-            border: 1px solid var(--accent-gold);
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        ">
-            <p style="
-                color: #ffffff;
-                font-size: 0.92rem;
-                margin-bottom: 12px;
-                font-weight: 500;
-                line-height: 1.4;
-            ">
-                전체 명반 분석 결과는 로그인 후 확인하실 수 있습니다.
-            </p>
-            <a href="/login" style="
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                padding: 8px 20px;
-                background: var(--accent-gold);
-                color: #000000;
-                font-size: 0.9rem;
-                font-weight: 700;
-                border-radius: 6px;
-                text-decoration: none;
-                transition: background 0.2s ease;
-            ">
-                <span>로그인하러 가기</span>
-                <span style="font-family: sans-serif;">➔</span>
-            </a>
-        </div>
+       <div style="margin-top: 25px; padding: 20px; background: rgba(207, 181, 59, 0.12); border: 1px solid var(--accent-gold); border-radius: 12px; text-align: center;">
+                <p style="color: #fff; font-size: 1rem; margin-bottom: 12px; font-weight: 600;">
+                    전체 명반 분석 결과는 로그인 후 확인하실 수 있습니다.
+                </p>
+                <a href="/login" style="display: inline-block; padding: 10px 24px; background: var(--accent-gold); color: #000; font-weight: bold; border-radius: 6px; text-decoration: none;">
+                    로그인하러 가기 ➔
+                </a>
+            </div>
         `;
     }
 
