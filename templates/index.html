@@ -278,7 +278,7 @@ document.getElementById('sajuForm').addEventListener('submit', async function(e)
         localStorage.setItem("isLoggedIn", result.is_logged_in ? "true" : "false");
         localStorage.setItem("userName", data.name);
 
-        window.location.href = "response.html";
+        window.location.href = "/response.html";
     } catch(error) {
         console.error(error);
         alert('명반 분석 요청 중 오류가 발생했습니다.');
