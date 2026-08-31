@@ -256,38 +256,33 @@ document.getElementById('sajuForm').addEventListener('submit', async function(e)
         calendarType: formData.get('calendarType')
     };
 
-    console.log(data);
+    console.log(data);	// 데이타를 log에서 출력. 나중에 삭제해도 무방.
 
     try {
-        const response = await fetch('http://219.248.39.171:8000/chat', {
+        // 상대 경로 '/chat' 호출 및 쿠키 전달(credentials: 'include')
+        const response = await fetch('/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(data)
-
         });
 
-        const result = await response.json();
-        console.log(result);
-        
-        // GPT 결과 저장
-        localStorage.setItem(
-            "sajuResult",
-            result.result
-        );
-        // 이름 저장
-        localStorage.setItem(
-            "userName",
-            data.name
-        );
-        // 결과 페이지 이동
+        if (!response.ok) throw new Error('서버 응답 오류');
+
+		const result = await response.json();
+
+        // localStorage에 데이터 임시 저장 후 response.html로 이동
+        localStorage.setItem("sajuResult", result.result);
+        localStorage.setItem("isLoggedIn", result.is_logged_in ? "true" : "false");
+        localStorage.setItem("userName", data.name);
+
         window.location.href = "response.html";
     } catch(error) {
         console.error(error);
-        alert('서버 전송 실패');
+        alert('명반 분석 요청 중 오류가 발생했습니다.');
     }
-
 });
 
 
