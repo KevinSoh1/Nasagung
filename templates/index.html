@@ -123,6 +123,71 @@
             .hero { height: auto; padding: 120px 0 60px; }
             .intro-text h1 { font-size: 2.2rem; }
         }
+		
+		document.getElementById('sajuForm').addEventListener('submit', async function(e) {
+    	e.preventDefault();
+
+    	// 1. 로딩 화면 표시 및 문구 로테이션 설정
+    	const loadingOverlay = document.getElementById('loadingOverlay');
+    	const loadingText = document.getElementById('loadingText');
+    	loadingOverlay.style.display = 'flex';
+
+    	const loadingMessages = [
+	        "당신의 명반을 분석하고 있습니다...",
+    	    "사주팔자와 명반을 조합하는 중입니다...",
+        	"운명의 흐름을 읽어내고 있습니다...",
+        	"곧 결과가 도출됩니다..."
+    	];
+    	let msgIndex = 0;
+    
+    	// 2초마다 메시지 변경
+    	const messageInterval = setInterval(() => {
+        	msgIndex = (msgIndex + 1) % loadingMessages.length;
+        	loadingText.innerText = loadingMessages[msgIndex];
+    	}, 2000);
+
+    	// 2. Form 데이터 수집
+    	const formData = new FormData(this);
+    	const data = {
+        	name: formData.get('name'),
+        	gender: formData.get('gender'),
+        	birthdate: formData.get('birthdate'),
+        	birthtime: formData.get('birthtime'),
+        	calendarType: formData.get('calendarType')
+    	};
+
+    	try {
+        	// 3. 백엔드로 API 요청
+        	const response = await fetch('/chat', {
+            	method: 'POST',
+            	headers: {
+                	'Content-Type': 'application/json'
+	            },
+    	        credentials: 'include',
+        	    body: JSON.stringify(data)
+        	});
+
+        	if (!response.ok) throw new Error('서버 응답 오류');
+
+        	const result = await response.json();
+        
+        	// 4. 데이터 저장
+        	localStorage.setItem("sajuResult", result.result);
+        	localStorage.setItem("isLoggedIn", result.is_logged_in ? "true" : "false");
+        	localStorage.setItem("userName", data.name);
+
+        	// 5. 페이지 이동 (이동 시 로딩 화면은 자연스럽게 사라짐)
+        	window.location.href = "/response.html";
+
+    	} catch(error) {
+        	console.error(error);
+        	alert('명반 분석 요청 중 오류가 발생했습니다.');
+        
+        	// 에러 발생 시 로딩 화면 닫기
+        	clearInterval(messageInterval);
+        	loadingOverlay.style.display = 'none';
+    	}
+	});
     </style>
 </head>
 <body>
