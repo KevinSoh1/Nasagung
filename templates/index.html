@@ -303,9 +303,67 @@ genderBtns.forEach(btn => {
     });
 
 });
-
 </script>
+<!-- 로딩 오버레이 레이어 -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <!-- 움직이는 로딩 스피너 -->
+        <div class="spinner"></div>
+        <h3 id="loadingText">당신의 명반을 분석하고 있습니다...</h3>
+        <p>잠시만 기다려 주세요 (약 3~5초 소요)</p>
+    </div>
+</div>
 
+<style>
+/* 로딩 화면 전체 배경 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.85); /* 어두운 반투명 배경 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* 최상단에 띄우기 */
+    backdrop-filter: blur(5px);
+}
+
+/* 로딩 박스 컨텐츠 */
+.loading-content {
+    text-align: center;
+    color: #ffffff;
+}
+
+.loading-content h3 {
+    font-size: 1.4rem;
+    margin-top: 20px;
+    color: var(--accent-gold, #cfb53b);
+}
+
+.loading-content p {
+    font-size: 0.95rem;
+    color: #ccc;
+    margin-top: 8px;
+}
+
+/* 금빛 로딩 스피너 애니메이션 */
+.spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid var(--accent-gold, #cfb53b);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
 
 </body>
 </html>
