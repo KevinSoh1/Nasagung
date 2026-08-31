@@ -201,10 +201,12 @@ async def analyze_saju(
                 "result": full_result
             })
         else:
-            # 비로그인 사용자는 앞 30자만 자른 후 전달
+           # 전체 텍스트 길이를 구한 뒤 1/3 지점 계산 (정수 나눗셈 //)
+            one_third_length = len(full_result) // 3
+            
             return JSONResponse({
                 "is_logged_in": False,
-                "result": full_result[:150]
+                "result": full_result[:one_third_length]
             })
 
     except Exception as e:
