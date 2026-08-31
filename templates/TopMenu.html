@@ -76,31 +76,35 @@ function updateTopPoint(newPoint) {
 // 팝업창에서 window.opener.updateTopPoint()를 즉시 찾을 수 있도록 전역 명시
 window.updateTopPoint = updateTopPoint;
 </script>
+{% if user_email %}
 <script>
     (function() {
-        // 1분(60초) = 60,000 밀리초
-        const INACTIVE_TIMEOUT = 60 * 1000; 
+        const INACTIVE_TIMEOUT = 60 * 1000; // 1분
         let timeoutTimer;
 
-        // 로그아웃 수행 함수
+        // [깜빡임 없는 로그아웃 처리]
         function logoutUser() {
-            alert('일정 시간 동안 활동이 없어 자동으로 로그아웃됩니다.');
-            window.location.href = '/logout';
+            // 화면 이동 없이 백엔드로 로그아웃 요청 보내 쿠키 삭제
+            fetch('/logout', { method: 'GET' })
+                .then(() => {
+                    alert('일정 시간 동안 활동이 없어 자동으로 로그아웃되었습니다.');
+                    // 필요 시 로그인 버튼 상태로 UI 부분 변경 또는 메인 이동
+                    window.location.href = '/'; 
+                })
+                .catch(err => console.error('Auto logout failed:', err));
         }
 
-        // 타이머 리셋 함수
         function resetTimer() {
             clearTimeout(timeoutTimer);
             timeoutTimer = setTimeout(logoutUser, INACTIVE_TIMEOUT);
         }
 
-        // 사용자 활동 감지 이벤트 등록
         const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
         events.forEach(function(event) {
             window.addEventListener(event, resetTimer, true);
         });
 
-        // 페이지 로드 시 타이머 시작
         resetTimer();
     })();
 </script>
+{% endif %}
