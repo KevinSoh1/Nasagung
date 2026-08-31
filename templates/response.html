@@ -91,33 +91,7 @@
 
         .saju-section { flex: 1.2; background: var(--glass-bg); padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); color: #333; }
         .saju-section h2 { font-family: 'Noto Serif KR', serif; font-size: 1.8rem; margin-bottom: 30px; color: var(--bg-dark); font-weight: 700; text-align: center; }
-
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group.full-width { grid-column: span 2; }
-        .form-group label { font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #555; }
-        .form-group input, .form-group select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: 0.3s; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--accent-gold); outline: none; box-shadow: 0 0 0 3px rgba(207, 181, 59, 0.2); }
-
-        .gender-group { display: flex; gap: 10px; }
-        .gender-btn { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .gender-btn.active { background: var(--bg-dark); color: var(--white); border-color: var(--bg-dark); }
-
-        .btn-submit { background: var(--accent-gold); color: #000; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-submit:hover { background: #b89e2b; transform: translateY(-2px); }
-
-        .quick-menu { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
-        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; }
-        .quick-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateX(5px); border-color: var(--accent-gold); }
-        .q-icon { font-size: 2.5rem; }
-        .q-text strong { display: block; font-size: 1.15rem; color: var(--white); margin-bottom: 5px; }
-        .q-text span { font-size: 0.85rem; color: var(--text-muted); }
-
-        .promo-card { background: linear-gradient(135deg, #1e295d, #0a1128); border: 1px solid rgba(207, 181, 59, 0.3); padding: 25px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
-        .promo-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(207,181,59,0.1) 0%, transparent 70%); }
-        .promo-text strong { display: block; font-size: 1.2rem; color: var(--accent-gold); margin-bottom: 5px; }
-        .promo-text p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
-        .promo-gift { font-size: 3rem; }
+        
 
         @media (max-width: 992px) {
             .main-content-layout { flex-direction: column; }
@@ -140,34 +114,19 @@
     </style>
 </head>
 <body>
-
-<header>
-    <div class="header-container">
-        <a href="/nasagung/"><div class="logo">나사궁(나의 사주가 궁금해)</div></a>
-        <nav>
-            <ul class="main-menu">
-                <li class="dropdown">
-                    <a href="#">사주팔자</a>
-                    <ul class="submenu">
-                        <li><a href="#">평생 사주</a></li>
-                        <li><a href="#">신년 운세</a></li>
-                        <li><a href="#">월간 흐름</a></li>
-                    </ul>
-                </li>
-                <li><a href="#">운세</a></li>
-                <li><a href="#">궁합</a></li>
-                <li><a href="#">재물운</a></li>
-                <li><a href="#">사업운</a></li>
-                <li><a href="#">AI 상담</a></li>
-                <li><a href="#">커뮤니티</a></li>
-            </ul>
-        </nav>
-        <div class="auth-buttons">
-            <a href="login.php"><button class="btn-login">로그인</button></a>
-            <a href="register.php"><button class="btn-signup">회원가입</button></a>
-        </div>
-    </div>
-</header>
+<!-- 💡 JS로 TopMenu.html을 불러와서 div 안에 삽입 
+    <script>
+        fetch('TopMenu.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('top-menu').innerHTML = data;
+            });
+    </script>
+	-->
+<!-- 메인 메뉴가 들어갈 위치 시작
+<div id="top-menu"></div>
+      메인 메뉴가 들어갈 위치 끝 -->	
+{% include 'TopMenu.html' %}
 
 <main class="hero">
     <div class="hero-content">
@@ -187,9 +146,7 @@
         </div>
     </div>
 </main>
-
-
- <script>
+<script>
 
         // 저장된 결과 가져오기
         const result = localStorage.getItem("sajuResult");
