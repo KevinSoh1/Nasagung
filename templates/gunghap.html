@@ -1,0 +1,312 @@
+﻿DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나사궁 - 두 사람의 인연, 궁합 분석</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a1128;
+            --accent-gold: #cfb53b;
+            --white: #ffffff;
+            --text-muted: #bdc3c7;
+            --glass-bg: rgba(255, 255, 255, 0.92);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
+
+        a { text-decoration: none; color: white; }
+        a:hover { color: var(--accent-gold); }
+
+        /* 상단 탑 메뉴 */
+        header {
+            background: rgba(10, 17, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed; width: 100%; top: 0; z-index: 1000;
+        }
+        .header-container {
+            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center; white-space: nowrap; width: 100%;
+        }
+        .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
+        .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
+
+        nav .main-menu { display: flex; list-style: none; margin: 0; padding: 0; }
+        nav .main-menu li { margin: 0 15px; position: relative; }
+        nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
+        nav .main-menu li a:hover { color: var(--accent-gold); }
+
+        .auth-buttons { display: flex; align-items: center; gap: 12px; }
+        .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        .btn-login:hover { background: rgba(255,255,255,0.1); }
+        .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-signup:hover { background: #b89e2b; }
+
+        /* 메인 히어로 섹션 */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(rgba(10, 17, 40, 0.6), rgba(10, 17, 40, 0.6)), 
+                        url('../images/background.png') center/cover no-repeat;
+            background-attachment: fixed;
+            display: flex; align-items: center; justify-content: center;
+            padding-top: 120px; padding-bottom: 60px;
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 20px; }
+
+        .intro-text { text-align: center; margin-bottom: 40px; }
+        .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 3.2rem; line-height: 1.3; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .intro-text .highlight { color: var(--accent-gold); }
+        .intro-text p { color: var(--text-muted); font-size: 1.2rem; text-shadow: 1px 1px 5px rgba(0,0,0,0.8); }
+
+        .gunghap-container { background: var(--glass-bg); padding: 40px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); color: #333; }
+        .gunghap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; }
+        .gunghap-grid::after {
+            content: '❤️';
+            position: absolute; left: 49%; top: 40%; transform: translate(-50%, -50%);
+            background: var(--glass-bg); padding: 10px; border-radius: 50%; font-size: 1.5rem; z-index: 2;
+        }
+        .gunghap-column { position: relative; }
+        .gunghap-column:first-child { border-right: 1px dashed #ccc; padding-right: 20px; }
+        
+        .column-title { font-family: 'Noto Serif KR', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; text-align: center; color: var(--bg-dark); border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .column-title.partner { color: #b83b5e; }
+
+        .form-group { display: flex; flex-direction: column; margin-bottom: 20px; }
+        .form-group label { font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #555; }
+        .form-group input, .form-group select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: 0.3s; background: #fff; color: #333; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent-gold); outline: none; box-shadow: 0 0 0 3px rgba(207, 181, 59, 0.2); }
+
+        .gender-group { display: flex; gap: 10px; }
+        .gender-btn { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; transition: 0.3s; color: #333; }
+        .gender-btn.active { background: var(--bg-dark); color: var(--white); border-color: var(--bg-dark); }
+        .gender-btn.partner-active { background: #b83b5e; color: var(--white); border-color: #b83b5e; }
+
+        .btn-submit { background: var(--accent-gold); color: #000; border: none; padding: 18px; border-radius: 8px; font-size: 1.2rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 25px; box-shadow: 0 4px 15px rgba(207,181,59,0.3); }
+        .btn-submit:hover { background: #b89e2b; transform: translateY(-2px); }
+
+        @media (max-width: 992px) {
+            .gunghap-grid { grid-template-columns: 1fr; gap: 20px; }
+            .gunghap-grid::after { display: none; }
+            .gunghap-column:first-child { border-right: none; border-bottom: 1px dashed #ccc; padding-right: 0; padding-bottom: 30px; }
+            .hero { padding: 120px 0 60px; }
+            .intro-text h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+<!-- 💡 JS로 TopMenu.html을 불러와서 div 안에 삽입 
+<script>
+	fetch('TopMenu.html')
+        	.then(response => response.text())
+            	.then(data => {
+                document.getElementById('top-menu').innerHTML = data;
+            });
+</script>
+-->
+<!-- 메인 메뉴가 들어갈 위치 시작
+<div id="top-menu"></div>
+      메인 메뉴가 들어갈 위치 끝 -->	
+{% include 'TopMenu.html' %}
+
+<main class="hero">
+    <div class="hero-content">
+        <section class="intro-text">
+            <h1>두 사람의 명반이 그리는 <span class="highlight">하나의 인연</span></h1>
+            <p>정밀한 명식 대조를 통해 서로의 합과 미래를 조율해 보세요</p>
+        </section>
+
+        <div class="gunghap-container mt-5">
+            <form id="gunghapForm">
+                <div class="gunghap-grid">
+                    <!-- 본인 정보 -->
+                    <div class="gunghap-column">
+                        <div class="column-title">나의 정보 입력</div>
+                        <div class="form-group">
+                            <label>이름</label>
+                            <input type="text" name="my_name" placeholder="이름을 입력하세요" required>
+                        </div>
+                        <div class="form-group">
+                            <label>성별</label>
+                            <input type="hidden" name="my_gender" id="myGenderValue" value="남성">
+                            <div class="gender-group">
+                                <button type="button" class="gender-btn my-gender active" data-value="남성">남성</button>
+                                <button type="button" class="gender-btn my-gender" data-value="여성">여성</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>생년월일</label>
+                            <input type="date" name="my_birthdate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>출생시간</label>
+                            <select name="my_birthtime" required>
+                                <option value="">시간 선택</option>
+                                <option value="子">子시 (23:30 ~ 01:29)</option>
+                                <option value="丑">丑시 (01:30 ~ 03:29)</option>
+                                <option value="寅">寅시 (03:30 ~ 05:29)</option>
+                                <option value="卯">卯시 (05:30 ~ 07:29)</option>
+                                <option value="辰">辰시 (07:30 ~ 09:29)</option>
+                                <option value="巳">巳시 (09:30 ~ 11:29)</option>
+                                <option value="午">午시 (11:30 ~ 13:29)</option>
+                                <option value="未">未시 (13:30 ~ 15:29)</option>
+                                <option value="申">申시 (15:30 ~ 17:29)</option>
+                                <option value="酉">酉시 (17:30 ~ 19:29)</option>
+                                <option value="戌">戌시 (19:30 ~ 21:29)</option>
+                                <option value="亥">亥시 (21:30 ~ 23:29)</option>
+                                <option value="모름">모름</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>캘린더 선택</label>
+                            <select name="my_calendarType">
+                                <option value="양력">양력 (Solar)</option>
+                                <option value="음력-평달">음력 평달 (Lunar Regular)</option>
+                                <option value="음력-윤달">음력 윤달 (Lunar Leap)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 상대방 정보 -->
+                    <div class="gunghap-column">
+                        <div class="column-title partner">상대방 정보 입력</div>
+                        <div class="form-group">
+                            <label>상대방 이름</label>
+                            <input type="text" name="partner_name" placeholder="상대방 이름을 입력하세요" required>
+                        </div>
+                        <div class="form-group">
+                            <label>상대방 성별</label>
+                            <input type="hidden" name="partner_gender" id="partnerGenderValue" value="여성">
+                            <div class="gender-group">
+                                <button type="button" class="gender-btn partner-gender" data-value="남성">남성</button>
+                                <button type="button" class="gender-btn partner-gender partner-active" data-value="여성">여성</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>상대방 생년월일</label>
+                            <input type="date" name="partner_birthdate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>상대방 출생시간</label>
+                            <select name="partner_birthtime" required>
+                                <option value="">시간 선택</option>
+                                <option value="子">子시 (23:30 ~ 01:29)</option>
+                                <option value="丑">丑시 (01:30 ~ 03:29)</option>
+                                <option value="寅">寅시 (03:30 ~ 05:29)</option>
+                                <option value="卯">卯시 (05:30 ~ 07:29)</option>
+                                <option value="辰">辰시 (07:30 ~ 09:29)</option>
+                                <option value="巳">巳시 (09:30 ~ 11:29)</option>
+                                <option value="午">午시 (11:30 ~ 13:29)</option>
+                                <option value="未">未시 (13:30 ~ 15:29)</option>
+                                <option value="申">申시 (15:30 ~ 17:29)</option>
+                                <option value="酉">酉시 (17:30 ~ 19:29)</option>
+                                <option value="戌">戌시 (19:30 ~ 21:29)</option>
+                                <option value="亥">亥시 (21:30 ~ 23:29)</option>
+                                <option value="모름">모름</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>상대방 캘린더 선택</label>
+                            <select name="partner_calendarType">
+                                <option value="양력">양력 (Solar)</option>
+                                <option value="음력-평달">음력 평달 (Lunar Regular)</option>
+                                <option value="음력-윤달">음력 윤달 (Lunar Leap)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">두 사람의 인연 분석하기 ?</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<!-- 로딩 모달 -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary" style="border-radius: 15px;">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-warning mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
+                <h4 class="font-family-serif text-warning mb-2" style="font-family: 'Noto Serif KR', serif;">두 분의 인연을 조율하고 있습니다</h4>
+                <p class="text-muted mb-0">명반 궁합 교차 분석에는 약 5~10초의 시간이 소요될 수 있습니다. 잠시만 기다려주세요...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('gunghapForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    const formData = new FormData(this);
+
+    const payload = {
+        productID: "gunghap",
+        name: formData.get('my_name'),
+        gender: formData.get('my_gender'),
+        birthdate: formData.get('my_birthdate'),
+        birthtime: formData.get('my_birthtime'),
+        calendarType: formData.get('my_calendarType'),
+        partnerName: formData.get('partner_name'),
+        partnerGender: formData.get('partner_gender'),
+        partnerBirthdate: formData.get('partner_birthdate'),
+        partnerBirthtime: formData.get('partner_birthtime'),
+        partnerCalendarType: formData.get('partner_calendarType')
+    };
+
+    loadingModal.show();
+
+    try {
+        const response = await fetch('/gunghap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('서버 응답 에러');
+        
+        const result = await response.json();
+
+        // LocalStorage에 결과 및 입력 데이터 저장
+        localStorage.setItem("gunghapResult", result.result);
+        localStorage.setItem("isLoggedIn", result.is_logged_in ? "true" : "false");
+        localStorage.setItem("meName", payload.name);
+        localStorage.setItem("partnerName", payload.partnerName);
+
+        loadingModal.hide();
+        window.location.href = "/gunghapResult.html";
+    } catch(error) {
+        console.error(error);
+        loadingModal.hide();
+        alert('궁합 분석 중 오류가 발생했습니다.');
+    }
+});
+
+// 성별 선택 버튼 토글 logic
+const myGenderBtns = document.querySelectorAll('.my-gender');
+myGenderBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        myGenderBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('myGenderValue').value = this.getAttribute('data-value');
+    });
+});
+
+const partnerGenderBtns = document.querySelectorAll('.partner-gender');
+partnerGenderBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        partnerGenderBtns.forEach(b => b.classList.remove('partner-active'));
+        this.classList.add('partner-active');
+        document.getElementById('partnerGenderValue').value = this.getAttribute('data-value');
+    });
+});
+</script>
+</body>
+</html>
