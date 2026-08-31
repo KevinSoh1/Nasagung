@@ -146,23 +146,36 @@
         </div>
     </div>
 </main>
+
 <script>
+    const result = localStorage.getItem("sajuResult") || "분석 결과를 불러올 수 없습니다.";
+    const userName = localStorage.getItem("userName") || "고객";
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-        // 저장된 결과 가져오기
-        const result = localStorage.getItem("sajuResult");
+    // 이름 세팅
+    document.getElementById("username").innerHTML = "<h2>" + userName + "님의 명반 분석</h2>";
 
-        const userName = localStorage.getItem("userName");
+    // 결과 텍스트 변환
+    const resultBox = document.getElementById("result");
+    let formattedResult = result.replace(/\n/g, "<br>");
 
-        // 이름 표시
-        document.getElementById("username").innerHTML =
-            "<h2>" + userName + "님의 명반 분석</h2>";
+    // 비로그인 사용자 안내 레이아웃 추가
+    if (!isLoggedIn) {
+        formattedResult += "...<br><br>";
+        formattedResult += `
+            <div style="margin-top: 25px; padding: 20px; background: rgba(207, 181, 59, 0.12); border: 1px solid var(--accent-gold); border-radius: 12px; text-align: center;">
+                <p style="color: #fff; font-size: 1rem; margin-bottom: 12px; font-weight: 600;">
+                    전체 명반 분석 결과는 로그인 후 확인하실 수 있습니다.
+                </p>
+                <a href="/login" style="display: inline-block; padding: 10px 24px; background: var(--accent-gold); color: #000; font-weight: bold; border-radius: 6px; text-decoration: none;">
+                    로그인하러 가기 ➔
+                </a>
+            </div>
+        `;
+    }
 
-        // 결과 표시
-        document.getElementById("result").innerHTML =
-            result.replace(/\n/g, "<br>");
-
-    </script>
-
+    resultBox.innerHTML = formattedResult;
+</script>
 
 </body>
 </html>
