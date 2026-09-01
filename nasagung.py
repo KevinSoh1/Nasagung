@@ -829,8 +829,12 @@ async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(
 
 @app.get("/gunghapResult.html", response_class=HTMLResponse)
 async def get_gunghap_result_page(request: Request, user_email: Optional[str] = Cookie(None)):
-    return templates.TemplateResponse(request=request, name="gunghapResult.html")
-
+    is_logged_in = bool(user_email)
+    return templates.TemplateResponse(
+        request=request, 
+        name="gunghapResult.html",
+        context={"is_logged_in": is_logged_in}
+    )
 
 # 2. 궁합 분석 API (POST /gunghap)
 @app.post("/gunghap")
