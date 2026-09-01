@@ -17,9 +17,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from openai import OpenAI
-from database import get_db
-from models import User  # <-- User 모델 import 추가!
-
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
