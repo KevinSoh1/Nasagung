@@ -141,15 +141,18 @@
                         <div class="column-title">나의 정보 입력</div>
                         <div class="form-group">
                             <label>이름</label>
-                            <input type="text" name="my_name" placeholder="이름을 입력하세요" value="{{ user.username if user else '' }}" required>
+                            <input type="text" name="name" placeholder="이름을 입력하세요" value="{{ user.username if user else '' }}" required>
                         </div>
                         <div class="form-group">
                             <label>성별</label>
-                            <input type="hidden" name="my_gender" id="myGenderValue" value="{{ user.gender if user and user.gender else '남성' }}">
-                            <div class="gender-group">
-                                <button type="button" class="gender-btn my-gender {% if not user or user.gender == '남성' %}active{% endif %}" data-value="남성">남성</button>
-                                <button type="button" class="gender-btn my-gender {% if user and user.gender == '여성' %}active{% endif %}" data-value="여성">여성</button>
-                            </div>
+            				<!-- DB field: user.gender (male / female) -> form 전송용 한글값(남성/여성) 매핑 -->
+            				{% set user_gender = user.gender if user and user.gender else 'male' %}
+            				<input type="hidden" name="gender" id="genderValue" value="{{ '여성' if user_gender == 'female' else '남성' }}">
+
+            				<div class="gender-group">
+                				<button type="button" class="gender-btn {{ 'active' if user_gender == 'male' else '' }}">남성</button>
+                				<button type="button" class="gender-btn {{ 'active' if user_gender == 'female' else '' }}">여성</button>
+            				</div>
                         </div>
                         <div class="form-group">
                             <label>생년월일</label>
@@ -157,22 +160,22 @@
                         </div>
                         <div class="form-group">
                             <label>출생시간</label>
-                            <select name="my_birthtime" required>
-                                <option value="">시간 선택</option>
-                                <option value="子" {% if user and user.birthtime == '子' %}selected{% endif %}>子시 (23:30 ~ 01:29)</option>
-                                <option value="丑" {% if user and user.birthtime == '丑' %}selected{% endif %}>丑시 (01:30 ~ 03:29)</option>
-                                <option value="寅" {% if user and user.birthtime == '寅' %}selected{% endif %}>寅시 (03:30 ~ 05:29)</option>
-                                <option value="卯" {% if user and user.birthtime == '卯' %}selected{% endif %}>卯시 (05:30 ~ 07:29)</option>
-                                <option value="辰" {% if user and user.birthtime == '辰' %}selected{% endif %}>辰시 (07:30 ~ 09:29)</option>
-                                <option value="巳" {% if user and user.birthtime == '巳' %}selected{% endif %}>巳시 (09:30 ~ 11:29)</option>
-                                <option value="午" {% if user and user.birthtime == '午' %}selected{% endif %}>午시 (11:30 ~ 13:29)</option>
-                                <option value="未" {% if user and user.birthtime == '未' %}selected{% endif %}>未시 (13:30 ~ 15:29)</option>
-                                <option value="申" {% if user and user.birthtime == '申' %}selected{% endif %}>申시 (15:30 ~ 17:29)</option>
-                                <option value="酉" {% if user and user.birthtime == '酉' %}selected{% endif %}>酉시 (17:30 ~ 19:29)</option>
-                                <option value="戌" {% if user and user.birthtime == '戌' %}selected{% endif %}>戌시 (19:30 ~ 21:29)</option>
-                                <option value="亥" {% if user and user.birthtime == '亥' %}selected{% endif %}>亥시 (21:30 ~ 23:29)</option>
-                                <option value="모름" {% if user and user.birthtime == '모름' %}selected{% endif %}>모름</option>
-                            </select>
+                           	<select name="birthtime" required>
+                				<option value="">시간 선택</option>
+                					{% set u_time = user.birthtime if user and user.birthtime else '' %}
+                					<option value="子(자)" {{ 'selected' if '子(자)' in u_time else '' }}>子(자)(23:30 ~ 01:29)</option>
+                					<option value="丑(축)" {{ 'selected' if '丑(축)' in u_time else '' }}>丑(축)(01:30 ~ 03:29)</option>
+                					<option value="寅(인)" {{ 'selected' if '寅(인)' in u_time else '' }}>寅(인)(03:30 ~ 05:29)</option>
+                					<option value="卯(묘)" {{ 'selected' if '卯(묘)' in u_time else '' }}>卯(묘)(05:30 ~ 07:29)</option>
+                					<option value="辰(진)" {{ 'selected' if '辰(진)' in u_time else '' }}>辰(진)(07:30 ~ 09:29)</option>
+                					<option value="巳(사)" {{ 'selected' if '巳(사)' in u_time else '' }}>巳(사)(09:30 ~ 11:29)</option>
+                					<option value="午(오)" {{ 'selected' if '午(오)' in u_time else '' }}>午(오)(11:30 ~ 13:29)</option>
+                					<option value="未(미)" {{ 'selected' if '未(미)' in u_time else '' }}>未(미)(13:30 ~ 15:29)</option>
+                					<option value="申(신)" {{ 'selected' if '申(신)' in u_time else '' }}>申(신)(15:30 ~ 17:29)</option>
+                					<option value="酉(유)" {{ 'selected' if '酉(유)' in u_time else '' }}>酉(유)(17:30 ~ 19:29)</option>
+                					<option value="戌(술)" {{ 'selected' if '戌(술)' in u_time else '' }}>戌(술)(19:30 ~ 21:29)</option>
+                					<option value="亥(해)" {{ 'selected' if '亥(해)' in u_time else '' }}>亥(해)(21:30 ~ 23:29)</option>
+            				</select>
                         </div>
                         <div class="form-group">
                             <label>캘린더 선택</label>
