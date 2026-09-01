@@ -148,14 +148,14 @@
                 분석 결과를 불러오는 중입니다...
             </div>
 
-            <a href="/gunghap.html" class="btn-retry">다시 궁합 보기 ?</a>
+            <a href="/gunghap.html" class="btn-retry">다시 궁합 보기</a>
         </div>
     </div>
 </main>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const meName = localStorage.getItem("meName") || "나";
+    const meName = localStorage.getItem("Name") || "나";
     const partnerName = localStorage.getItem("partnerName") || "상대방";
     const result = localStorage.getItem("gunghapResult") || "결과를 불러올 수 없습니다.";
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
