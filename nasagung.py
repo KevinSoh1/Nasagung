@@ -155,87 +155,7 @@ async def read_root(
     )
 
 # ==========================================
-# 명반 분석 API (POST /chat)
-# ==========================================
-@app.post("/chat")
-async def analyze_saju(
-    request: Request,
-    user_email: Optional[str] = Cookie(None),
-    db=Depends(get_db)
-):
-    try:
-        data = await request.json()
-        name = data.get("name", "미입력")
-        gender = data.get("gender", "미입력")
-        birthdate = data.get("birthdate", "")
-        birthtime = data.get("birthtime", "")
-        calendar_type = data.get("calendarType", "양력")
-
-        # OpenAI 프롬프트 구성
-        prompt = f"""
-        다음 사용자의 사주 및 명반을 바탕으로 운세와 종합 분석을 상세하게 작성해 주세요.
-        - 이름: {name}
-        - 성별: {gender}
-        - 생년월일: {birthdate} ({calendar_type})
-        - 출생시간: {birthtime}
-        """
-
-        # GPT-4o-mini 호출
-        completion = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "당신은 정교하고 신뢰감 있는 전문적인 명반 및 사주 전문 명리학자입니다.\n 사용자 정보를 바탕으로 깊이 있는 사주/운세 풀이를 제공해 주세요.\n가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-
-        full_result = completion.choices[0].message.content.strip()
-
-        # 로그인 여부 검증
-        is_logged_in = bool(user_email)
-
-        if is_logged_in:
-            return JSONResponse({
-                "is_logged_in": True,
-                "result": full_result
-            })
-        else:
-           # 전체 텍스트 길이를 구한 뒤 1/3 지점 계산 (정수 나눗셈 //)
-            one_third_length = len(full_result) // 3
-            
-            return JSONResponse({
-                "is_logged_in": False,
-                "result": full_result[:one_third_length]
-            })
-
-    except Exception as e:
-        logger.error(f"Saju Analysis Error: {str(e)}")
-        return JSONResponse({"error": "분석 중 오류가 발생했습니다."}, status_code=500)
-
-# ==========================================
-# Response.html 라우터 등록
-# ==========================================
-@app.get("/response.html", response_class=HTMLResponse)
-async def read_response_page(
-    request: Request,
-    user_email: Optional[str] = Cookie(None),
-    db=Depends(get_db),
-):
-    current_user = get_current_user(user_email, db) if user_email else None
-    
-    file_path = os.path.join(templates_dir, "response.html")
-    if os.path.exists(file_path):
-        return templates.TemplateResponse(
-            request=request,
-            name="response.html",
-            context={"user": current_user, "user_email": user_email}
-        )
-    return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
-
-
-# ==========================================
-# DB 연결 테스트 전용 엔드포인트
+# DB 연결 테스트를 위한 전용 엔드포인트
 # ==========================================
 @app.get("/db-test")
 async def test_db():
@@ -742,6 +662,88 @@ async def edit_profile_submit(
             }
         )
 
+
+# ==========================================
+# 명반 분석 API (POST /chat)
+# ==========================================
+@app.post("/chat")
+async def analyze_saju(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db)
+):
+    try:
+        data = await request.json()
+        name = data.get("name", "미입력")
+        gender = data.get("gender", "미입력")
+        birthdate = data.get("birthdate", "")
+        birthtime = data.get("birthtime", "")
+        calendar_type = data.get("calendarType", "양력")
+
+        # OpenAI 프롬프트 구성
+        prompt = f"""
+        다음 사용자의 사주 및 명반을 바탕으로 운세와 종합 분석을 상세하게 작성해 주세요.
+        - 이름: {name}
+        - 성별: {gender}
+        - 생년월일: {birthdate} ({calendar_type})
+        - 출생시간: {birthtime}
+        """
+
+        # GPT-4o-mini 호출
+        completion = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "당신은 정교하고 신뢰감 있는 전문적인 명반 및 사주 전문 명리학자입니다.\n 사용자 정보를 바탕으로 깊이 있는 사주/운세 풀이를 제공해 주세요.\n가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+
+        full_result = completion.choices[0].message.content.strip()
+
+        # 로그인 여부 검증
+        is_logged_in = bool(user_email)
+
+        if is_logged_in:
+            return JSONResponse({
+                "is_logged_in": True,
+                "result": full_result
+            })
+        else:
+           # 전체 텍스트 길이를 구한 뒤 1/3 지점 계산 (정수 나눗셈 //)
+            one_third_length = len(full_result) // 3
+            
+            return JSONResponse({
+                "is_logged_in": False,
+                "result": full_result[:one_third_length]
+            })
+
+    except Exception as e:
+        logger.error(f"Saju Analysis Error: {str(e)}")
+        return JSONResponse({"error": "분석 중 오류가 발생했습니다."}, status_code=500)
+
+
+# ==========================================
+# 명반 결과물 출력 Response.html 라우터 등록
+# ==========================================
+@app.get("/response.html", response_class=HTMLResponse)
+async def read_response_page(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db),
+):
+    current_user = get_current_user(user_email, db) if user_email else None
+    
+    file_path = os.path.join(templates_dir, "response.html")
+    if os.path.exists(file_path):
+        return templates.TemplateResponse(
+            request=request,
+            name="response.html",
+            context={"user": current_user, "user_email": user_email}
+        )
+    return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
+
+
 # ==========================================
 # 로또 페이지 (GET: 화면 접속 / POST: AI 번호 생성)
 # ==========================================
@@ -815,7 +817,88 @@ async def lotto_page(
             "service_title": service_title
         }
     )
-    
+
+# ==========================================
+# 궁합 입력 처리 부분.
+# ==========================================
+
+# 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
+@app.get("/gunghap.html", response_class=HTMLResponse)
+async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None)):
+    return templates.TemplateResponse(request=request, name="gunghap.html")
+
+@app.get("/gunghapResult.html", response_class=HTMLResponse)
+async def get_gunghap_result_page(request: Request, user_email: Optional[str] = Cookie(None)):
+    return templates.TemplateResponse(request=request, name="gunghapResult.html")
+
+
+# 2. 궁합 분석 API (POST /gunghap)
+@app.post("/gunghap")
+async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(None)):
+    try:
+        data = await request.json()
+        
+        # 본인 정보
+        my_name = data.get("name", "본인")
+        my_gender = data.get("gender", "미입력")
+        my_birthdate = data.get("birthdate", "")
+        my_birthtime = data.get("birthtime", "")
+        my_calendar = data.get("calendarType", "양력")
+
+        # 상대방 정보
+        partner_name = data.get("partnerName", "상대방")
+        partner_gender = data.get("partnerGender", "미입력")
+        partner_birthdate = data.get("partnerBirthdate", "")
+        partner_birthtime = data.get("partnerBirthtime", "")
+        partner_calendar = data.get("partnerCalendarType", "양력")
+
+        # OpenAI 궁합 분석 전용 프롬프트 구성
+        prompt = f"""
+        다음 두 사람의 명식을 대조하여 인연과 궁합을 정밀하게 분석해 주세요.
+        
+        [첫 번째 사람 (본인)]
+        - 이름: {my_name}
+        - 성별: {my_gender}
+        - 생년월일: {my_birthdate} ({my_calendar})
+        - 출생시간: {my_birthtime}
+
+        [두 번째 사람 (상대방)]
+        - 이름: {partner_name}
+        - 성별: {partner_gender}
+        - 생년월일: {partner_birthdate} ({partner_calendar})
+        - 출생시간: {partner_birthtime}
+
+        [분석 요청 사항]
+        1. 두 사람의 음양오행적 조화와 전체적인 궁합 점수(총평)
+        2. 서로에게 미치는 긍정적 영향과 주의해야 할 갈등 요소
+        3. 연애 및 결혼 관점에서의 조화도 및 조언
+        """
+
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "당신은 두 사람의 사주와 오행의 조화를 분석하여 인연의 깊이를 풀어주는 전통 명리 궁합 전문가입니다.\n당신은 정교하고 신뢰감 있는 전문 궁합 학자입니다.\n
+                                                아래 두 사람의 사주 정보를 바탕으로 성격 조화, 애정운, 주의해야 할 점 등을 종합적으로 분석한 깊이 있는 궁합 풀이를 제공해 주세요.\n
+                                                1.정중하고 부드러운 어조(한글)로 작성해 주세요.\n2. 두 사람의 오행 조화, 성향 차이, 그리고 함께하면 좋은 발전적인 방향을 상세히 설명해 주세요.\n3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+
+        full_result = completion.choices[0].message.content.strip()
+        is_logged_in = bool(user_email)
+
+        # 로그인 여부에 따라 결과 텍스트 길이 제어 (비로그인 시 1/3 제공)
+        if is_logged_in:
+            return JSONResponse({"is_logged_in": True, "result": full_result})
+        else:
+            one_third_len = len(full_result) // 3
+            return JSONResponse({"is_logged_in": False, "result": full_result[:one_third_len]})
+
+    except Exception as e:
+        logger.error(f"Gunghap Analysis Error: {str(e)}")
+        return JSONResponse({"error": "궁합 분석 중 오류가 발생했습니다."}, status_code=500)
+        
 # ==========================================
 # [결제하기] pay_popup.html 처리
 # ==========================================
