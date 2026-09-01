@@ -819,11 +819,11 @@ async def lotto_page(
     )
 
 # ==========================================
-# 궁합 입력 처리 부분.
+# 궁합 입력 처리 부분
 # ==========================================
 
 # 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
-@app.post("/gunghap.html", response_class=HTMLResponse)
+@app.get("/gunghap.html", response_class=HTMLResponse)
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None)):
     return templates.TemplateResponse(request=request, name="gunghap.html")
 
@@ -878,18 +878,20 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         3. 연애 및 결혼 관점에서의 조화도 및 조언
         """
 
+        system_instruction = """당신은 두 사람의 사주와 오행의 조화를 분석하여 인연의 깊이를 풀어주는 전통 명리 궁합 전문가입니다.
+당신은 정교하고 신뢰감 있는 전문 궁합 학자입니다.
+아래 두 사람의 사주 정보를 바탕으로 성격 조화, 애정운, 주의해야 할 점 등을 종합적으로 분석한 깊이 있는 궁합 풀이를 제공해 주세요.
+
+1. 정중하고 부드러운 어조(한국어)로 작성해 주세요.
+2. 두 사람의 오행 조화, 성향 차이, 그리고 함께하면 좋은 발전적인 방향을 상세히 설명해 주세요.
+3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."""
+
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system", 
-                    "content": """당신은 두 사람의 사주와 오행의 조화를 분석하여 인연의 깊이를 풀어주는 전통 명리 궁합 전문가입니다.
-                            당신은 정교하고 신뢰감 있는 전문 궁합 학자입니다.
-                            아래 두 사람의 사주 정보를 바탕으로 성격 조화, 애정운, 주의해야 할 점 등을 종합적으로 분석한 깊이 있는 궁합 풀이를 제공해 주세요.
-                            
-                            1. 정중하고 부드러운 어조(한국어)로 작성해 주세요.
-                            2. 두 사람의 오행 조화, 성향 차이, 그리고 함께하면 좋은 발전적인 방향을 상세히 설명해 주세요.
-                            3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."""
+                    "content": system_instruction
                 },
                 {
                     "role": "user", 
@@ -912,7 +914,8 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
     except Exception as e:
         logger.error(f"Gunghap Analysis Error: {str(e)}")
         return JSONResponse({"error": "궁합 분석 중 오류가 발생했습니다."}, status_code=500)
-        
+
+
 # ==========================================
 # [결제하기] pay_popup.html 처리
 # ==========================================
