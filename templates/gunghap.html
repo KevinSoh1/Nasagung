@@ -156,7 +156,20 @@
                         </div>
                         <div class="form-group">
                             <label>생년월일</label>
-                            <input type="date" name="my_birthdate" value="{{ user.birthdate if user else '' }}" required>
+                            {% if user and user.birthyear and user.birthday %}
+        						{# 월-일 구분자 '-' 기준으로 나누어 각각 2자리수(05, 09 등)로 보정 #}
+        						{% set b_parts = user.birthday.split('-') %}
+        						{% if b_parts|length == 2 %}
+            						{% set m = '%02d' % b_parts[0]|int %}
+            						{% set d = '%02d' % b_parts[1]|int %}
+            						{% set full_birthdate = user.birthyear ~ '-' ~ m ~ '-' ~ d %}
+        							{% else %}
+            							{% set full_birthdate = user.birthyear ~ '-' ~ user.birthday %}
+        						{% endif %}
+    						{% else %}
+        						{% set full_birthdate = '' %}
+    						{% endif %}
+    					<input type="date" name="birthdate" value="{{ full_birthdate }}" required>
                         </div>
                         <div class="form-group">
                             <label>출생시간</label>
