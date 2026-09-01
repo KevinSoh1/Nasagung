@@ -823,7 +823,7 @@ async def lotto_page(
 # ==========================================
 
 # 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
-@app.get("/gunghap.html", response_class=HTMLResponse)
+@app.post("/gunghap.html", response_class=HTMLResponse)
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None)):
     return templates.TemplateResponse(request=request, name="gunghap.html")
 
