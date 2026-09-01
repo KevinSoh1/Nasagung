@@ -20,36 +20,11 @@
         a { text-decoration: none; color: white; }
         a:hover { color: var(--accent-gold); }
 
-        /* 상단 탑 메뉴 */
-        header {
-            background: rgba(10, 17, 40, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: fixed; width: 100%; top: 0; z-index: 1000;
-        }
-        .header-container {
-            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center; white-space: nowrap; width: 100%;
-        }
-        .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
-        .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
-
-        nav .main-menu { display: flex; list-style: none; margin: 0; padding: 0; }
-        nav .main-menu li { margin: 0 15px; position: relative; }
-        nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
-        nav .main-menu li a:hover { color: var(--accent-gold); }
-
-        .auth-buttons { display: flex; align-items: center; gap: 12px; }
-        .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .btn-login:hover { background: rgba(255,255,255,0.1); }
-        .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-signup:hover { background: #b89e2b; }
-
         /* 메인 히어로 섹션 */
         .hero {
             min-height: 100vh;
             background: linear-gradient(rgba(10, 17, 40, 0.6), rgba(10, 17, 40, 0.6)), 
-                        url('../images/background.png') center/cover no-repeat;
+                        url('/static/images/background.png') center/cover no-repeat;
             background-attachment: fixed;
             display: flex; align-items: center; justify-content: center;
             padding-top: 120px; padding-bottom: 60px;
@@ -98,16 +73,9 @@
     </style>
 </head>
 <body>
-<script>
-	fetch('TopMenu.html')
-        	.then(response => response.text())
-            	.then(data => {
-                document.getElementById('top-menu').innerHTML = data;
-            });
-</script>
-<!-- 메뉴 영역 -->
-{% include 'TopMenu.html' %}
-<div id="top-menu"></div>
+
+<!-- 1. FastAPI Jinja2 템플릿 포함 방식 (topMenu.html 파일명 통일) -->
+{% include 'topMenu.html' %}
 
 <main class="hero">
     <div class="hero-content">
@@ -237,17 +205,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// TopMenu 동적 로드 (백엔드 프레임워크 미사용 시)
-fetch('TopMenu.html')
-    .then(response => {
-        if (!response.ok) throw new Error('TopMenu 로드 실패');
-        return response.text();
-    })
-    .then(data => {
-        document.getElementById('top-menu').innerHTML = data;
-    })
-    .catch(err => console.error('메뉴 파일 로딩 에러:', err));
-
 // 폼 제출 이벤트
 document.getElementById('gunghapForm').addEventListener('submit', async function(e) {
     e.preventDefault();
