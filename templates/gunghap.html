@@ -141,7 +141,7 @@
                         <div class="column-title">나의 정보 입력</div>
                         <div class="form-group">
                             <label>이름</label>
-                            <input type="text" name="name" placeholder="이름을 입력하세요" value="{{ user.username if user else '' }}" required>
+                            <input type="text" name="name" placeholder="이름을 입력하세요" value="{{ user.name if user else '' }}" required>
                         </div>
                         <div class="form-group">
                             <label>성별</label>
@@ -175,15 +175,18 @@
                 					<option value="酉(유)" {{ 'selected' if '酉(유)' in u_time else '' }}>酉(유)(17:30 ~ 19:29)</option>
                 					<option value="戌(술)" {{ 'selected' if '戌(술)' in u_time else '' }}>戌(술)(19:30 ~ 21:29)</option>
                 					<option value="亥(해)" {{ 'selected' if '亥(해)' in u_time else '' }}>亥(해)(21:30 ~ 23:29)</option>
+									<option value="모름" {{ 'selected' if '모름' in u_time else '' }}>모름</option>
             				</select>
                         </div>
                         <div class="form-group">
                             <label>캘린더 선택</label>
-                            <select name="my_calendarType">
-                                <option value="양력" {% if user and user.calendarType == '양력' %}selected{% endif %}>양력 (Solar)</option>
-                                <option value="음력-평달" {% if user and user.calendarType == '음력-평달' %}selected{% endif %}>음력 평달 (Lunar Regular)</option>
-                                <option value="음력-윤달" {% if user and user.calendarType == '음력-윤달' %}selected{% endif %}>음력 윤달 (Lunar Leap)</option>
-                            </select>
+                           <!-- DB field: user.calendarType ("양력", "음력", "음력-평달", "음력-윤달") -->
+            				<select name="calendarType">
+                				{% set u_cal = user.calendarType if user and user.calendarType else '양력' %}
+                				<option value="양력" {{ 'selected' if u_cal == '양력' else '' }}>양력 (Solar)</option>
+                				<option value="음력-평달" {{ 'selected' if u_cal in ['음력', '음력-평달'] else '' }}>음력 평달 (Lunar Regular)</option>
+                				<option value="음력-윤달" {{ 'selected' if u_cal == '음력-윤달' else '' }}>음력 윤달 (Lunar Leap)</option>
+            				</select>
                         </div>
                     </div>
 
@@ -209,20 +212,19 @@
                         <div class="form-group">
                             <label>상대방 출생시간</label>
                             <select name="partner_birthtime" required>
-                                <option value="">시간 선택</option>
-                                <option value="子">子시 (23:30 ~ 01:29)</option>
-                                <option value="丑">丑시 (01:30 ~ 03:29)</option>
-                                <option value="寅">寅시 (03:30 ~ 05:29)</option>
-                                <option value="卯">卯시 (05:30 ~ 07:29)</option>
-                                <option value="辰">辰시 (07:30 ~ 09:29)</option>
-                                <option value="巳">巳시 (09:30 ~ 11:29)</option>
-                                <option value="午">午시 (11:30 ~ 13:29)</option>
-                                <option value="未">未시 (13:30 ~ 15:29)</option>
-                                <option value="申">申시 (15:30 ~ 17:29)</option>
-                                <option value="酉">酉시 (17:30 ~ 19:29)</option>
-                                <option value="戌">戌시 (19:30 ~ 21:29)</option>
-                                <option value="亥">亥시 (21:30 ~ 23:29)</option>
-                                <option value="모름">모름</option>
+								<option value="子(자)">子(자)(23:30 ~ 01:29)</option>
+                				<option value="丑(축)">丑(축)(01:30 ~ 03:29)</option>
+                				<option value="寅(인)">寅(인)(03:30 ~ 05:29)</option>
+                				<option value="卯(묘)">卯(묘)(05:30 ~ 07:29)</option>
+                				<option value="辰(진)">辰(진)(07:30 ~ 09:29)</option>
+                				<option value="巳(사)">巳(사)(09:30 ~ 11:29)</option>
+                				<option value="午(오)">午(오)(11:30 ~ 13:29)</option>
+                				<option value="未(미)">未(미)(13:30 ~ 15:29)</option>
+                				<option value="申(신)">申(신)(15:30 ~ 17:29)</option>
+                				<option value="酉(유)">酉(유)(17:30 ~ 19:29)</option>
+                				<option value="戌(술)">戌(술)(19:30 ~ 21:29)</option>
+                				<option value="亥(해)">亥(해)(21:30 ~ 23:29)</option>
+								<option value="모름">모름</option>
                             </select>
                         </div>
                         <div class="form-group">
