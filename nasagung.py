@@ -852,36 +852,35 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         
         # 본인 정보
         my_name = data.get("name", "본인")
-        my_gender = data.get("gender", "미입력")
+        my_gender = data.get("gender", "")
         my_birthdate = data.get("birthdate", "")
         my_birthtime = data.get("birthtime", "")
-        my_calendar = data.get("calendarType", "양력")
+        my_calendar = data.get("calendarType", "")
 
         # 상대방 정보
         partner_name = data.get("partnerName", "상대방")
-        partner_gender = data.get("partnerGender", "미입력")
+        partner_gender = data.get("partnerGender", "")
         partner_birthdate = data.get("partnerBirthdate", "")
         partner_birthtime = data.get("partnerBirthtime", "")
-        partner_calendar = data.get("partnerCalendarType", "양력")
+        partner_calendar = data.get("partnerCalendarType", "")
 
         # OpenAI 궁합 분석 전용 프롬프트 구성
         prompt = f"""
         다음 두 사람의 명식을 대조하여 인연과 궁합을 정밀하게 분석해 주세요.
         
         [첫 번째 사람 (본인)]
-        - 이름: {name}
-        - 성별: {gender}
-        - 생년월일: {birthdate} ({calendarType})
-        - 출생시간: {birthtime}
-        - 달려 : {calendarType}
+        - 이름: {my_name}
+        - 성별: {my_gender}
+        - 생년월일: {my_birthdate} ({my_calendar})
+        - 출생시간: {my_birthtime}
+        
 
         [두 번째 사람 (상대방)]
         - 이름: {partner_name}
         - 성별: {partner_gender}
         - 생년월일: {partner_birthdate} ({partner_calendar})
         - 출생시간: {partner_birthtime}
-        - 달력 : {partner_calendarType}
-
+        
         [분석 요청 사항]
         1. 두 사람의 음양오행적 조화와 전체적인 궁합 점수(총평)
         2. 서로에게 미치는 긍정적 영향과 주의해야 할 갈등 요소
