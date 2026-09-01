@@ -105,6 +105,14 @@
             	.then(data => {
                 document.getElementById('top-menu').innerHTML = data;
             });
+
+	const response = await fetch('/gunghap', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+});
 </script>
 -->
 <!-- 메인 메뉴가 들어갈 위치 시작
