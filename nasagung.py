@@ -824,13 +824,15 @@ async def lotto_page(
 
 # 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
 @app.get("/gunghap.html", response_class=HTMLResponse)
+@app.get("/gunghap", response_class=HTMLResponse)  # <--- /gunghap GET 요청도 gunghap.html을 보여주도록 추가
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db=Depends(get_db)):
     current_user = get_current_user(user_email, db) if user_email else None
     return templates.TemplateResponse(
         request=request, 
-        name="gunghap.html", 
+        name="gunghap.html",
         context={"user": current_user}
     )
+
 @app.get("/gunghapResult.html", response_class=HTMLResponse)
 async def get_gunghap_result_page(request: Request, user_email: Optional[str] = Cookie(None)):
     is_logged_in = bool(user_email)
