@@ -826,9 +826,14 @@ async def lotto_page(
 @app.get("/gunghap.html", response_class=HTMLResponse)
 @app.get("/gunghap", response_class=HTMLResponse)  # <--- /gunghap GET 요청도 gunghap.html을 보여주도록 추가
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db=Depends(get_db)):
-    current_user = get_current_user(user_email, db) if user_email else None
+    # 1. 로그인 쿠키(user_email)가 있는 경우 DB에서 유저 조회
+    current_user = None
+    if user_email:
+        current_user = db.query(User).filter(User.email == user_email).first()
+
+    # 2. context에 user 객체를 전달
     return templates.TemplateResponse(
-        request=request, 
+        request=request,
         name="gunghap.html",
         context={
             "user": current_user
