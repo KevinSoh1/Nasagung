@@ -831,8 +831,8 @@ async def lotto_page(
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None)):
 
     # 1. 로그인 쿠키(user_email)가 있는 경우 DB에서 유저 조회
-    current_user = None
-   if user_email:
+current_user = None
+    if user_email:
         # 기존에 프로젝트에서 사용하시던 DB 연결 함수/객체 사용
         conn = get_db_connection() # 예: pymysql.connect(...)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
