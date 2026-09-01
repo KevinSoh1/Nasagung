@@ -827,21 +827,14 @@ async def lotto_page(
 
 # 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
 @app.get("/gunghap.html", response_class=HTMLResponse)
-@app.get("/gunghap", response_class=HTMLResponse)  # <--- /gunghap GET 요청도 gunghap.html을 보여주도록 추가
-async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None)):
-
+@app.get("/gunghap", response_class=HTMLResponse)
+async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
     # 1. 로그인 쿠키(user_email)가 있는 경우 DB에서 유저 조회
     current_user = None
     if user_email:
-        # 기존에 프로젝트에서 사용하시던 DB 연결 함수/객체 사용
-        conn = get_db_connection() # 예: pymysql.connect(...)
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        
-        sql = "SELECT * FROM nasagung_users WHERE email = %s"
-        cursor.execute(sql, (user_email,))
-        current_user = cursor.fetchone() # dict 형태로 회원정보 반환
-        conn.close()
+        current_user = db.query(User).filter(User.email == user_email).first()
 
+    # 2. context에 user 객체를 전달
     return templates.TemplateResponse(
         request=request,
         name="gunghap.html",
