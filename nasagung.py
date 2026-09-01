@@ -869,16 +869,18 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         다음 두 사람의 명식을 대조하여 인연과 궁합을 정밀하게 분석해 주세요.
         
         [첫 번째 사람 (본인)]
-        - 이름: {my_name}
-        - 성별: {my_gender}
-        - 생년월일: {my_birthdate} ({my_calendar})
-        - 출생시간: {my_birthtime}
+        - 이름: {name}
+        - 성별: {gender}
+        - 생년월일: {birthdate} ({calendarType})
+        - 출생시간: {birthtime}
+        - 달려 : {calendarType}
 
         [두 번째 사람 (상대방)]
         - 이름: {partner_name}
         - 성별: {partner_gender}
         - 생년월일: {partner_birthdate} ({partner_calendar})
         - 출생시간: {partner_birthtime}
+        - 달력 : {partner_calendarType}
 
         [분석 요청 사항]
         1. 두 사람의 음양오행적 조화와 전체적인 궁합 점수(총평)
