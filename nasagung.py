@@ -837,7 +837,7 @@ async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(
         conn = get_db_connection() # 예: pymysql.connect(...)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
         
-        sql = "SELECT * FROM users WHERE email = %s"
+        sql = "SELECT * FROM nasagung_users WHERE email = %s"
         cursor.execute(sql, (user_email,))
         current_user = cursor.fetchone() # dict 형태로 회원정보 반환
         conn.close()
