@@ -98,7 +98,13 @@
     </style>
 </head>
 <body>
-
+<script>
+	fetch('TopMenu.html')
+        	.then(response => response.text())
+            	.then(data => {
+                document.getElementById('top-menu').innerHTML = data;
+            });
+</script>
 <!-- 메뉴 영역 -->
 <div id="top-menu"></div>
 
