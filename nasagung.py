@@ -830,7 +830,9 @@ async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(
     return templates.TemplateResponse(
         request=request, 
         name="gunghap.html",
-        context={"user": current_user}
+        context={
+            "user": current_user
+        }
     )
 
 @app.get("/gunghapResult.html", response_class=HTMLResponse)
