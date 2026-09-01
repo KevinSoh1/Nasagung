@@ -885,7 +885,7 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
                             
                             1. 정중하고 부드러운 어조(한국어)로 작성해 주세요.
                             2. 두 사람의 오행 조화, 성향 차이, 그리고 함께하면 좋은 발전적인 방향을 상세히 설명해 주세요.
-                            3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요.""""
+                            3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."""
                 },
                 {
                     "role": "user", 
