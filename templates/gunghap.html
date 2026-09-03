@@ -279,13 +279,14 @@ document.getElementById('gunghapForm').addEventListener('submit', async function
     const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
     const formData = new FormData(this);
 
+    // HTML 내 name 속성과 일치하도록 수정
     const payload = {
         productID: "gunghap",
-        name: formData.get('my_name'),
-        gender: formData.get('my_gender'),
-        birthdate: formData.get('my_birthdate'),
-        birthtime: formData.get('my_birthtime'),
-        calendarType: formData.get('my_calendarType'),
+        name: formData.get('name'),                   // 'my_name' -> 'name'
+        gender: formData.get('gender'),               // 'my_gender' -> 'gender'
+        birthdate: formData.get('birthdate'),         // 'my_birthdate' -> 'birthdate'
+        birthtime: formData.get('birthtime'),         // 'my_birthtime' -> 'birthtime'
+        calendarType: formData.get('calendarType'),   // 'my_calendarType' -> 'calendarType'
         partnerName: formData.get('partner_name'),
         partnerGender: formData.get('partner_gender'),
         partnerBirthdate: formData.get('partner_birthdate'),
@@ -310,8 +311,8 @@ document.getElementById('gunghapForm').addEventListener('submit', async function
         // LocalStorage에 결과 저장
         localStorage.setItem("gunghapResult", result.result);
         localStorage.setItem("isLoggedIn", result.is_logged_in ? "true" : "false");
-        localStorage.setItem("meName", payload.name);
-        localStorage.setItem("partnerName", payload.partnerName);
+        localStorage.setItem("meName", payload.name || "본인");
+        localStorage.setItem("partnerName", payload.partnerName || "상대방");
 
         loadingModal.hide();
         window.location.href = "/gunghapResult.html";
