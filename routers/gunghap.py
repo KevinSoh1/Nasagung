@@ -1,15 +1,30 @@
+# 1. Standard Library (íŒŒì´ì¬ ê¸°ë³¸ ë¼ì´ë¸ŒëŸ¬ë¦¬)
+import logging
+from typing import Optional
+
+# 2. Third-Party Packages (ì™¸ë¶€ íŒ¨í‚¤ì§€)
+from openai import OpenAI  # client ì‚¬ìš©ì„ ìœ„í•´ í•„ìš”
+from fastapi import APIRouter, Request, Cookie, Depends
+from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy.orm import Session
+
+# 3. Local / Project Imports (ë‚´ë¶€ íŒŒì¼ ë° ëª¨ë“ˆ)
+# â€» ì•„ë˜ ëª¨ë“ˆ ì´ë¦„ê³¼ ê²½ë¡œ(main, database, models ë“±)ëŠ” ì‹¤ì œ í”„ë¡œì íŠ¸ êµ¬ì¡°ì— ë§ì¶° ìˆ˜ì •í•˜ì„¸ìš”.
+from database import get_db             # DB ì„¸ì…˜ ì˜ì¡´ì„± Injection í•¨ìˆ˜
+from crud import get_current_user       # ìœ ì € ì¡°íšŒ í•¨ìˆ˜
+from main import templates              # Jinja2Templates ì¸ìŠ¤í„´ìŠ¤
 
 router = APIRouter()
 
 # ==========================================
-# ±ÃÇÕ ÀÔ·Â Ã³¸® ºÎºĞ
+# ê¶í•© ì…ë ¥ ì²˜ë¦¬ ë¶€ë¶„
 # ==========================================
 
-# 1. ±ÃÇÕ ÀÔ·Â ÆäÀÌÁö & °á°ú ÆäÀÌÁö GET ¶ó¿ìÆ®
+# 1. ê¶í•© ì…ë ¥ í˜ì´ì§€ & ê²°ê³¼ í˜ì´ì§€ GET ë¼ìš°íŠ¸
 @router.app.get("/gunghap.html", response_class=HTMLResponse)
 @router.app.get("/gunghap", response_class=HTMLResponse)
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
-    # 1. ·Î±×ÀÎ ÄíÅ°(user_email)°¡ ÀÖ´Â °æ¿ì DB¿¡¼­ À¯Àú Á¶È¸
+    # 1. ë¡œê·¸ì¸ ì¿ í‚¤(user_email)ê°€ ìˆëŠ” ê²½ìš° DBì—ì„œ ìœ ì € ì¡°íšŒ
     current_user = get_current_user(user_email, db) if user_email else None
     return templates.TemplateResponse(
         request=request, 
@@ -28,56 +43,56 @@ async def get_gunghap_result_page(request: Request, user_email: Optional[str] = 
         context={"is_logged_in": is_logged_in}
     )
 
-# 2. ±ÃÇÕ ºĞ¼® API (POST /gunghap)
+# 2. ê¶í•© ë¶„ì„ API (POST /gunghap)
 @router.app.post("/gunghap")
 async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(None)):
     try:
         data = await request.json()
         
-        # º»ÀÎ Á¤º¸
-        my_name = data.get("name", "º»ÀÎ")
+        # ë³¸ì¸ ì •ë³´
+        my_name = data.get("name", "ë³¸ì¸")
         my_gender = data.get("gender", "")
         my_birthdate = data.get("birthdate", "")
         my_birthtime = data.get("birthtime", "")
         my_calendar = data.get("calendarType", "")
 
-        # »ó´ë¹æ Á¤º¸
-        partner_name = data.get("partnerName", "»ó´ë¹æ")
+        # ìƒëŒ€ë°© ì •ë³´
+        partner_name = data.get("partnerName", "ìƒëŒ€ë°©")
         partner_gender = data.get("partnerGender", "")
         partner_birthdate = data.get("partnerBirthdate", "")
         partner_birthtime = data.get("partnerBirthtime", "")
         partner_calendar = data.get("partnerCalendarType", "")
 
-        # OpenAI ±ÃÇÕ ºĞ¼® Àü¿ë ÇÁ·ÒÇÁÆ® ±¸¼º
+        # OpenAI ê¶í•© ë¶„ì„ ì „ìš© í”„ë¡¬í”„íŠ¸ êµ¬ì„±
         prompt = f"""
-        ´ÙÀ½ µÎ »ç¶÷ÀÇ ¸í½ÄÀ» ´ëÁ¶ÇÏ¿© ÀÎ¿¬°ú ±ÃÇÕÀ» Á¤¹ĞÇÏ°Ô ºĞ¼®ÇØ ÁÖ¼¼¿ä.
+        ë‹¤ìŒ ë‘ ì‚¬ëŒì˜ ëª…ì‹ì„ ëŒ€ì¡°í•˜ì—¬ ì¸ì—°ê³¼ ê¶í•©ì„ ì •ë°€í•˜ê²Œ ë¶„ì„í•´ ì£¼ì„¸ìš”.
         
-        [Ã¹ ¹øÂ° »ç¶÷ (º»ÀÎ)]
-        - ÀÌ¸§: {my_name}
-        - ¼ºº°: {my_gender}
-        - »ı³â¿ùÀÏ: {my_birthdate} ({my_calendar})
-        - Ãâ»ı½Ã°£: {my_birthtime}
+        [ì²« ë²ˆì§¸ ì‚¬ëŒ (ë³¸ì¸)]
+        - ì´ë¦„: {my_name}
+        - ì„±ë³„: {my_gender}
+        - ìƒë…„ì›”ì¼: {my_birthdate} ({my_calendar})
+        - ì¶œìƒì‹œê°„: {my_birthtime}
         
 
-        [µÎ ¹øÂ° »ç¶÷ (»ó´ë¹æ)]
-        - ÀÌ¸§: {partner_name}
-        - ¼ºº°: {partner_gender}
-        - »ı³â¿ùÀÏ: {partner_birthdate} ({partner_calendar})
-        - Ãâ»ı½Ã°£: {partner_birthtime}
+        [ë‘ ë²ˆì§¸ ì‚¬ëŒ (ìƒëŒ€ë°©)]
+        - ì´ë¦„: {partner_name}
+        - ì„±ë³„: {partner_gender}
+        - ìƒë…„ì›”ì¼: {partner_birthdate} ({partner_calendar})
+        - ì¶œìƒì‹œê°„: {partner_birthtime}
         
-        [ºĞ¼® ¿äÃ» »çÇ×]
-        1. µÎ »ç¶÷ÀÇ À½¾ç¿ÀÇàÀû Á¶È­¿Í ÀüÃ¼ÀûÀÎ ±ÃÇÕ Á¡¼ö(ÃÑÆò)
-        2. ¼­·Î¿¡°Ô ¹ÌÄ¡´Â ±àÁ¤Àû ¿µÇâ°ú ÁÖÀÇÇØ¾ß ÇÒ °¥µî ¿ä¼Ò
-        3. ¿¬¾Ö ¹× °áÈ¥ °üÁ¡¿¡¼­ÀÇ Á¶È­µµ ¹× Á¶¾ğ
+        [ë¶„ì„ ìš”ì²­ ì‚¬í•­]
+        1. ë‘ ì‚¬ëŒì˜ ìŒì–‘ì˜¤í–‰ì  ì¡°í™”ì™€ ì „ì²´ì ì¸ ê¶í•© ì ìˆ˜(ì´í‰)
+        2. ì„œë¡œì—ê²Œ ë¯¸ì¹˜ëŠ” ê¸ì •ì  ì˜í–¥ê³¼ ì£¼ì˜í•´ì•¼ í•  ê°ˆë“± ìš”ì†Œ
+        3. ì—°ì•  ë° ê²°í˜¼ ê´€ì ì—ì„œì˜ ì¡°í™”ë„ ë° ì¡°ì–¸
         """
 
-        system_instruction = """´ç½ÅÀº µÎ »ç¶÷ÀÇ »çÁÖ¿Í ¿ÀÇàÀÇ Á¶È­¸¦ ºĞ¼®ÇÏ¿© ÀÎ¿¬ÀÇ ±íÀÌ¸¦ Ç®¾îÁÖ´Â ÀüÅë ¸í¸® ±ÃÇÕ Àü¹®°¡ÀÔ´Ï´Ù.
-´ç½ÅÀº Á¤±³ÇÏ°í ½Å·Ú°¨ ÀÖ´Â Àü¹® ±ÃÇÕ ÇĞÀÚÀÔ´Ï´Ù.
-¾Æ·¡ µÎ »ç¶÷ÀÇ »çÁÖ Á¤º¸¸¦ ¹ÙÅÁÀ¸·Î ¼º°İ Á¶È­, ¾ÖÁ¤¿î, ÁÖÀÇÇØ¾ß ÇÒ Á¡ µîÀ» Á¾ÇÕÀûÀ¸·Î ºĞ¼®ÇÑ ±íÀÌ ÀÖ´Â ±ÃÇÕ Ç®ÀÌ¸¦ Á¦°øÇØ ÁÖ¼¼¿ä.
+        system_instruction = """ë‹¹ì‹ ì€ ë‘ ì‚¬ëŒì˜ ì‚¬ì£¼ì™€ ì˜¤í–‰ì˜ ì¡°í™”ë¥¼ ë¶„ì„í•˜ì—¬ ì¸ì—°ì˜ ê¹Šì´ë¥¼ í’€ì–´ì£¼ëŠ” ì „í†µ ëª…ë¦¬ ê¶í•© ì „ë¬¸ê°€ì…ë‹ˆë‹¤.
+ë‹¹ì‹ ì€ ì •êµí•˜ê³  ì‹ ë¢°ê° ìˆëŠ” ì „ë¬¸ ê¶í•© í•™ìì…ë‹ˆë‹¤.
+ì•„ë˜ ë‘ ì‚¬ëŒì˜ ì‚¬ì£¼ ì •ë³´ë¥¼ ë°”íƒ•ìœ¼ë¡œ ì„±ê²© ì¡°í™”, ì• ì •ìš´, ì£¼ì˜í•´ì•¼ í•  ì  ë“±ì„ ì¢…í•©ì ìœ¼ë¡œ ë¶„ì„í•œ ê¹Šì´ ìˆëŠ” ê¶í•© í’€ì´ë¥¼ ì œê³µí•´ ì£¼ì„¸ìš”.
 
-1. Á¤ÁßÇÏ°í ºÎµå·¯¿î ¾îÁ¶(ÇÑ±¹¾î)·Î ÀÛ¼ºÇØ ÁÖ¼¼¿ä.
-2. µÎ »ç¶÷ÀÇ ¿ÀÇà Á¶È­, ¼ºÇâ Â÷ÀÌ, ±×¸®°í ÇÔ²²ÇÏ¸é ÁÁÀº ¹ßÀüÀûÀÎ ¹æÇâÀ» »ó¼¼È÷ ¼³¸íÇØ ÁÖ¼¼¿ä.
-3. °¡µ¶¼ºÀÌ ÁÁ°Ô ´Ü¶ôÀ» ³ª´©°í markdown ¼­½ÄÀ» È°¿ëÇÏ¿© Ä£ÀıÇÏ°Ô ¼³¸íÇØ ÁÖ¼¼¿ä."""
+1. ì •ì¤‘í•˜ê³  ë¶€ë“œëŸ¬ìš´ ì–´ì¡°(í•œêµ­ì–´)ë¡œ ì‘ì„±í•´ ì£¼ì„¸ìš”.
+2. ë‘ ì‚¬ëŒì˜ ì˜¤í–‰ ì¡°í™”, ì„±í–¥ ì°¨ì´, ê·¸ë¦¬ê³  í•¨ê»˜í•˜ë©´ ì¢‹ì€ ë°œì „ì ì¸ ë°©í–¥ì„ ìƒì„¸íˆ ì„¤ëª…í•´ ì£¼ì„¸ìš”.
+3. ê°€ë…ì„±ì´ ì¢‹ê²Œ ë‹¨ë½ì„ ë‚˜ëˆ„ê³  markdown ì„œì‹ì„ í™œìš©í•˜ì—¬ ì¹œì ˆí•˜ê²Œ ì„¤ëª…í•´ ì£¼ì„¸ìš”."""
 
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -97,7 +112,7 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         full_result = completion.choices[0].message.content.strip()
         is_logged_in = bool(user_email)
 
-        # ·Î±×ÀÎ ¿©ºÎ¿¡ µû¶ó °á°ú ÅØ½ºÆ® ±æÀÌ Á¦¾î (ºñ·Î±×ÀÎ ½Ã 1/3 Á¦°ø)
+        # ë¡œê·¸ì¸ ì—¬ë¶€ì— ë”°ë¼ ê²°ê³¼ í…ìŠ¤íŠ¸ ê¸¸ì´ ì œì–´ (ë¹„ë¡œê·¸ì¸ ì‹œ 1/3 ì œê³µ)
         if is_logged_in:
             return JSONResponse({"is_logged_in": True, "result": full_result})
         else:
@@ -106,4 +121,4 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
 
     except Exception as e:
         logger.error(f"Gunghap Analysis Error: {str(e)}")
-        return JSONResponse({"error": "±ÃÇÕ ºĞ¼® Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù."}, status_code=500)
+        return JSONResponse({"error": "ê¶í•© ë¶„ì„ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤."}, status_code=500)
