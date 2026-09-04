@@ -1,8 +1,19 @@
+# 1. Standard Library (íŒŒì´ì¬ ê¸°ë³¸ ë¼ì´ë¸ŒëŸ¬ë¦¬)
+import logging
+from typing import Optional
+
+# 2. Third-Party Packages (ì™¸ë¶€ íŒ¨í‚¤ì§€)
+import openai  # openai.chat.completions.create(...) ì§ì ‘ í˜¸ì¶œ ì‹œ í•„ìš”
+from fastapi import APIRouter, Request, Cookie, Depends
+
+# 3. Local / Project Imports (ë‚´ë¶€ íŒŒì¼ ë° ëª¨ë“ˆ)
+# â€» í”„ë¡œì íŠ¸ êµ¬ì¡°ì— ë§ì¶° database ëª¨ë“ˆ ê²½ë¡œëŠ” ìˆ˜ì •í•´ ì£¼ì„¸ìš”.
+from database import get_db
 
 router = APIRouter()
 
 # ==========================================
-# ¸í¹İ ºĞ¼® API (POST /chat)
+# ëª…ë°˜ ë¶„ì„ API (POST /chat)
 # ==========================================
 @router.app.post("/chat")
 async def analyze_saju(
@@ -12,26 +23,26 @@ async def analyze_saju(
 ):
     try:
         data = await request.json()
-        name = data.get("name", "¹ÌÀÔ·Â")
-        gender = data.get("gender", "¹ÌÀÔ·Â")
+        name = data.get("name", "ë¯¸ì…ë ¥")
+        gender = data.get("gender", "ë¯¸ì…ë ¥")
         birthdate = data.get("birthdate", "")
         birthtime = data.get("birthtime", "")
-        calendar_type = data.get("calendarType", "¾ç·Â")
+        calendar_type = data.get("calendarType", "ì–‘ë ¥")
 
-        # OpenAI ÇÁ·ÒÇÁÆ® ±¸¼º
+        # OpenAI í”„ë¡¬í”„íŠ¸ êµ¬ì„±
         prompt = f"""
-        ´ÙÀ½ »ç¿ëÀÚÀÇ »çÁÖ ¹× ¸í¹İÀ» ¹ÙÅÁÀ¸·Î ¿î¼¼¿Í Á¾ÇÕ ºĞ¼®À» »ó¼¼ÇÏ°Ô ÀÛ¼ºÇØ ÁÖ¼¼¿ä.
-        - ÀÌ¸§: {name}
-        - ¼ºº°: {gender}
-        - »ı³â¿ùÀÏ: {birthdate} ({calendar_type})
-        - Ãâ»ı½Ã°£: {birthtime}
+        ë‹¤ìŒ ì‚¬ìš©ìì˜ ì‚¬ì£¼ ë° ëª…ë°˜ì„ ë°”íƒ•ìœ¼ë¡œ ìš´ì„¸ì™€ ì¢…í•© ë¶„ì„ì„ ìƒì„¸í•˜ê²Œ ì‘ì„±í•´ ì£¼ì„¸ìš”.
+        - ì´ë¦„: {name}
+        - ì„±ë³„: {gender}
+        - ìƒë…„ì›”ì¼: {birthdate} ({calendar_type})
+        - ì¶œìƒì‹œê°„: {birthtime}
         """
 
-        # GPT-4o-mini È£Ãâ
+        # GPT-4o-mini í˜¸ì¶œ
         completion = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "´ç½ÅÀº Á¤±³ÇÏ°í ½Å·Ú°¨ ÀÖ´Â Àü¹®ÀûÀÎ ¸í¹İ ¹× »çÁÖ Àü¹® ¸í¸®ÇĞÀÚÀÔ´Ï´Ù.\n »ç¿ëÀÚ Á¤º¸¸¦ ¹ÙÅÁÀ¸·Î ±íÀÌ ÀÖ´Â »çÁÖ/¿î¼¼ Ç®ÀÌ¸¦ Á¦°øÇØ ÁÖ¼¼¿ä.\n°¡µ¶¼ºÀÌ ÁÁ°Ô ´Ü¶ôÀ» ³ª´©°í markdown ¼­½ÄÀ» È°¿ëÇÏ¿© Ä£ÀıÇÏ°Ô ¼³¸íÇØ ÁÖ¼¼¿ä."},
+                {"role": "system", "content": "ë‹¹ì‹ ì€ ì •êµí•˜ê³  ì‹ ë¢°ê° ìˆëŠ” ì „ë¬¸ì ì¸ ëª…ë°˜ ë° ì‚¬ì£¼ ì „ë¬¸ ëª…ë¦¬í•™ìì…ë‹ˆë‹¤.\n ì‚¬ìš©ì ì •ë³´ë¥¼ ë°”íƒ•ìœ¼ë¡œ ê¹Šì´ ìˆëŠ” ì‚¬ì£¼/ìš´ì„¸ í’€ì´ë¥¼ ì œê³µí•´ ì£¼ì„¸ìš”.\nê°€ë…ì„±ì´ ì¢‹ê²Œ ë‹¨ë½ì„ ë‚˜ëˆ„ê³  markdown ì„œì‹ì„ í™œìš©í•˜ì—¬ ì¹œì ˆí•˜ê²Œ ì„¤ëª…í•´ ì£¼ì„¸ìš”."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7
@@ -39,7 +50,7 @@ async def analyze_saju(
 
         full_result = completion.choices[0].message.content.strip()
 
-        # ·Î±×ÀÎ ¿©ºÎ °ËÁõ
+        # ë¡œê·¸ì¸ ì—¬ë¶€ ê²€ì¦
         is_logged_in = bool(user_email)
 
 
