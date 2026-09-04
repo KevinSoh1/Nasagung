@@ -12,7 +12,7 @@ from fastapi import APIRouter, Request, Cookie, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 # 3. Local / Project Imports (내부 파일 및 모듈)
 # ※ 프로젝트 구조에 맞춰 database 모듈 경로는 수정해 주세요.
-from database import get_db
+from database import get_db, get_current_user
 
 router = APIRouter()
 
