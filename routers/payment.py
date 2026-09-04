@@ -9,8 +9,7 @@ from fastapi.responses import HTMLResponse
 
 # 3. Local / Project Imports (내부 파일 및 모듈)
 # ※ 프로젝트 구조 및 파일명에 맞춰 경로(main, database, crud 등)를 수정해 주세요.
-from database import get_db             # DB 세션/커넥션 의존성 주입 함수
-from crud import get_current_user       # 유저 정보 조회 함수
+from database import get_db, get_current_user            # DB 세션/커넥션 의존성 주입 함수,유저 정보 조회 함수
 from main import templates              # Jinja2Templates 인스턴스
 
 router = APIRouter()
