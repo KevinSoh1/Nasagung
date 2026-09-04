@@ -15,7 +15,7 @@ router = APIRouter()
 # ==========================================
 # 명반 분석 API (POST /chat)
 # ==========================================
-@router.app.post("/chat")
+@router.post("/chat")
 async def analyze_saju(
     request: Request,
     user_email: Optional[str] = Cookie(None),
