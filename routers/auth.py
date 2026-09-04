@@ -1,8 +1,19 @@
+import hashlib
+import os
+import re
+import time
+import uuid
+import logging
+from typing import Optional
+
+import requests
+from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 router = APIRouter()
 
 # ==========================================
-# 1. ·Î±×ÀÎ ÆäÀÌÁö È­¸é ¶ç¿ì±â (GET)
+# 1. ë¡œê·¸ì¸ í˜ì´ì§€ í™”ë©´ ë„ìš°ê¸° (GET)
 # ==========================================
 @router.app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -10,7 +21,7 @@ async def login_page(request: Request):
 
 
 # ==========================================
-# 2. ·Î±×ÀÎ Æû Á¦Ãâ Ã³¸® (POST)
+# 2. ë¡œê·¸ì¸ í¼ ì œì¶œ ì²˜ë¦¬ (POST)
 # ==========================================
 @router.app.post("/login", response_class=HTMLResponse)
 async def login_submit(
@@ -30,19 +41,19 @@ async def login_submit(
 
         if not user:
             return templates.TemplateResponse(
-                request, "login.html", {"error": "Á¸ÀçÇÏÁö ¾Ê´Â ÀÌ¸ŞÀÏ °èÁ¤ÀÔ´Ï´Ù."}
+                request, "login.html", {"error": "ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ì´ë©”ì¼ ê³„ì •ì…ë‹ˆë‹¤."}
             )
 
         if not user.get("password"):
-            provider_name = user.get("provider", "¼Ò¼È").upper()
+            provider_name = user.get("provider", "ì†Œì…œ").upper()
             return templates.TemplateResponse(
                 request, "login.html",
-                {"error": f"ÇØ´ç °èÁ¤Àº {provider_name} °£Æí ·Î±×ÀÎÀ¸·Î °¡ÀÔµÈ °èÁ¤ÀÔ´Ï´Ù. {provider_name} ¹öÆ°À» ÀÌ¿ëÇØ ÁÖ¼¼¿ä."}
+                {"error": f"í•´ë‹¹ ê³„ì •ì€ {provider_name} ê°„í¸ ë¡œê·¸ì¸ìœ¼ë¡œ ê°€ì…ëœ ê³„ì •ì…ë‹ˆë‹¤. {provider_name} ë²„íŠ¼ì„ ì´ìš©í•´ ì£¼ì„¸ìš”."}
             )
 
         if user["password"] != hashed_pw:
             return templates.TemplateResponse(
-                request, "login.html", {"error": "ºñ¹Ğ¹øÈ£°¡ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù."}
+                request, "login.html", {"error": "ë¹„ë°€ë²ˆí˜¸ê°€ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤."}
             )
 
         response = RedirectResponse(url="/mypage", status_code=303)
@@ -57,12 +68,12 @@ async def login_submit(
 
     except Exception as e:
         return templates.TemplateResponse(
-            request, "login.html", {"error": f"·Î±×ÀÎ Ã³¸® Áß ¿À·ù ¹ß»ı: {str(e)}"}
+            request, "login.html", {"error": f"ë¡œê·¸ì¸ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {str(e)}"}
         )
 
 
 # ==========================================
-# 2-1. ¼Ò¼È ·Î±×ÀÎ Äİ¹é Ã³¸® (³×ÀÌ¹ö / Ä«Ä«¿À)
+# 2-1. ì†Œì…œ ë¡œê·¸ì¸ ì½œë°± ì²˜ë¦¬ (ë„¤ì´ë²„ / ì¹´ì¹´ì˜¤)
 # ==========================================
 @router.app.get("/callback")
 async def social_callback(
@@ -73,10 +84,10 @@ async def social_callback(
     db=Depends(get_db)
 ):
     if not code or not type:
-        return templates.TemplateResponse(request, "login.html", {"error": "¼Ò¼È ÀÎÁõ Á¤º¸°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù."})
+        return templates.TemplateResponse(request, "login.html", {"error": "ì†Œì…œ ì¸ì¦ ì •ë³´ê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤."})
 
     email = None
-    name = "»ç¿ëÀÚ"
+    name = "ì‚¬ìš©ì"
     gender = ""
     birthyear = None
     birthday = ""
@@ -90,7 +101,7 @@ async def social_callback(
             access_token = token_res.get("access_token")
 
             if not access_token:
-                return templates.TemplateResponse(request, "login.html", {"error": "³×ÀÌ¹ö ÅäÅ« ¹ß±Ş¿¡ ½ÇÆĞÇß½À´Ï´Ù."})
+                return templates.TemplateResponse(request, "login.html", {"error": "ë„¤ì´ë²„ í† í° ë°œê¸‰ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤."})
 
             profile_res = requests.get(
                 "https://openapi.naver.com/v1/nid/me",
@@ -101,7 +112,7 @@ async def social_callback(
                 u = profile_res.get("response", {})
                 social_id = u.get("id", "")
                 email = u.get("email")
-                name = u.get("name") or u.get("nickname", "³×ÀÌ¹ö »ç¿ëÀÚ")
+                name = u.get("name") or u.get("nickname", "ë„¤ì´ë²„ ì‚¬ìš©ì")
                 
                 g_raw = u.get("gender", "")
                 if g_raw == "M": gender = "male"
@@ -125,7 +136,7 @@ async def social_callback(
             access_token = token_res.get("access_token")
 
             if not access_token:
-                return templates.TemplateResponse(request, "login.html", {"error": "Ä«Ä«¿À ÅäÅ« ¹ß±Ş¿¡ ½ÇÆĞÇß½À´Ï´Ù."})
+                return templates.TemplateResponse(request, "login.html", {"error": "ì¹´ì¹´ì˜¤ í† í° ë°œê¸‰ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤."})
 
             profile_res = requests.get(
                 "https://kapi.kakao.com/v2/user/me",
@@ -137,7 +148,7 @@ async def social_callback(
             profile_info = kakao_account.get("profile", {})
 
             email = kakao_account.get("email")
-            name = kakao_account.get("name") or profile_info.get("nickname", "Ä«Ä«¿À »ç¿ëÀÚ")
+            name = kakao_account.get("name") or profile_info.get("nickname", "ì¹´ì¹´ì˜¤ ì‚¬ìš©ì")
             gender = kakao_account.get("gender", "")
 
             by_raw = kakao_account.get("birthyear")
@@ -154,7 +165,7 @@ async def social_callback(
                 phone = ph_raw.replace("+82 ", "0").replace("+82-", "0")
 
         if not email:
-            return templates.TemplateResponse(request, "login.html", {"error": "¼Ò¼È °èÁ¤¿¡¼­ ÀÌ¸ŞÀÏ Á¤º¸¸¦ ¹Ş¾Æ¿Ã ¼ö ¾ø½À´Ï´Ù."})
+            return templates.TemplateResponse(request, "login.html", {"error": "ì†Œì…œ ê³„ì •ì—ì„œ ì´ë©”ì¼ ì •ë³´ë¥¼ ë°›ì•„ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."})
 
         with db.cursor() as cursor:
             cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (email,))
@@ -186,11 +197,11 @@ async def social_callback(
 
     except Exception as e:
         logger.error(f"Social login callback error: {str(e)}")
-        return templates.TemplateResponse(request, "login.html", {"error": f"¼Ò¼È ·Î±×ÀÎ ¿À·ù ¹ß»ı: {str(e)}"})
+        return templates.TemplateResponse(request, "login.html", {"error": f"ì†Œì…œ ë¡œê·¸ì¸ ì˜¤ë¥˜ ë°œìƒ: {str(e)}"})
 
 
 # ==========================================
-# 3. ·Î±×¾Æ¿ô Ã³¸® (GET)
+# 3. ë¡œê·¸ì•„ì›ƒ ì²˜ë¦¬ (GET)
 # ==========================================
 @router.app.get("/logout")
 async def logout():
@@ -200,7 +211,7 @@ async def logout():
 
 
 # ==========================================
-# 4. È¸¿ø°¡ÀÔ ÆäÀÌÁö È­¸é ¶ç¿ì±â (GET)
+# 4. íšŒì›ê°€ì… í˜ì´ì§€ í™”ë©´ ë„ìš°ê¸° (GET)
 # ==========================================
 @router.app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
@@ -208,7 +219,7 @@ async def register_page(request: Request):
 
 
 # ==========================================
-# 5. È¸¿ø°¡ÀÔ Æû Á¦Ãâ Ã³¸® (POST)
+# 5. íšŒì›ê°€ì… í¼ ì œì¶œ ì²˜ë¦¬ (POST)
 # ==========================================
 @router.app.post("/register", response_class=HTMLResponse)
 async def register_submit(
@@ -228,7 +239,7 @@ async def register_submit(
     if not re.match(pw_pattern, password):
         return templates.TemplateResponse(
             request, "register.html", 
-            {"error": "ºñ¹Ğ¹øÈ£´Â ¿µ¹®, ¼ıÀÚ, Æ¯¼ö¹®ÀÚ Æ÷ÇÔ 5ÀÚ ÀÌ»óÀÌ¾î¾ß ÇÕ´Ï´Ù."}
+            {"error": "ë¹„ë°€ë²ˆí˜¸ëŠ” ì˜ë¬¸, ìˆ«ì, íŠ¹ìˆ˜ë¬¸ì í¬í•¨ 5ì ì´ìƒì´ì–´ì•¼ í•©ë‹ˆë‹¤."}
         )
 
     saved_filename = ""
@@ -258,7 +269,7 @@ async def register_submit(
             if cursor.fetchone():
                 return templates.TemplateResponse(
                     request, "register.html", 
-                    {"error": "ÀÌ¹Ì µî·ÏµÈ ÀÌ¸ŞÀÏÀÔ´Ï´Ù."}
+                    {"error": "ì´ë¯¸ ë“±ë¡ëœ ì´ë©”ì¼ì…ë‹ˆë‹¤."}
                 )
 
             insert_sql = """
@@ -279,19 +290,19 @@ async def register_submit(
     except Exception as e:
         return templates.TemplateResponse(
             request, "register.html", 
-            {"error": f"°¡ÀÔ Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù: {str(e)}"}
+            {"error": f"ê°€ì… ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤: {str(e)}"}
         )
 
 
 # ==========================================
-# Mypage Ã³¸® ºÎºĞ
+# Mypage ì²˜ë¦¬ ë¶€ë¶„
 # ==========================================
 @router.app.get("/mypage", response_class=HTMLResponse)
 async def mypage(request: Request, db=Depends(get_db)):
     user_email = request.cookies.get("user_email")
     if not user_email:
         return HTMLResponse(
-            content="<script>alert('·Î±×ÀÎÀÌ ÇÊ¿äÇÑ ¼­ºñ½ºÀÔ´Ï´Ù.'); location.href='/login';</script>"
+            content="<script>alert('ë¡œê·¸ì¸ì´ í•„ìš”í•œ ì„œë¹„ìŠ¤ì…ë‹ˆë‹¤.'); location.href='/login';</script>"
         )
 
     with db.cursor() as cursor:
@@ -301,7 +312,7 @@ async def mypage(request: Request, db=Depends(get_db)):
 
     if not user:
         return HTMLResponse(
-            content="<script>alert('»ç¿ëÀÚ Á¤º¸¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.'); location.href='/login';</script>"
+            content="<script>alert('ì‚¬ìš©ì ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.'); location.href='/login';</script>"
         )
 
     current_img = user.get("profile_img") or ""
@@ -336,14 +347,14 @@ async def mypage(request: Request, db=Depends(get_db)):
 
 
 # ==========================================
-# MyPage¿¡¼­ Á¤º¸ ¼öÁ¤
+# MyPageì—ì„œ ì •ë³´ ìˆ˜ì •
 # ==========================================
 @router.app.get("/edit-profile", response_class=HTMLResponse)
 async def edit_profile_page(request: Request, db=Depends(get_db)):
     user_email = request.cookies.get("user_email")
     if not user_email:
         return HTMLResponse(
-            content="<script>alert('·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.'); location.href='/login';</script>"
+            content="<script>alert('ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.'); location.href='/login';</script>"
         )
 
     with db.cursor() as cursor:
@@ -353,7 +364,7 @@ async def edit_profile_page(request: Request, db=Depends(get_db)):
 
     if not user:
         return HTMLResponse(
-            content="<script>alert('»ç¿ëÀÚ Á¤º¸¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.'); location.href='/login';</script>"
+            content="<script>alert('ì‚¬ìš©ì ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.'); location.href='/login';</script>"
         )
 
     current_img = user.get("profile_img") or ""
@@ -407,7 +418,7 @@ async def edit_profile_submit(
     user_email = request.cookies.get("user_email")
     if not user_email:
         return HTMLResponse(
-            content="<script>alert('·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.'); location.href='/login';</script>"
+            content="<script>alert('ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.'); location.href='/login';</script>"
         )
 
     try:
