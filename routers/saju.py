@@ -9,7 +9,7 @@ from typing import Optional
 # 2. Third-Party Packages (외부 패키지)
 import openai  # openai.chat.completions.create(...) 직접 호출 시 필요
 from fastapi import APIRouter, Request, Cookie, Depends
-
+from fastapi.responses import HTMLResponse, RedirectResponse
 # 3. Local / Project Imports (내부 파일 및 모듈)
 # ※ 프로젝트 구조에 맞춰 database 모듈 경로는 수정해 주세요.
 from database import get_db
