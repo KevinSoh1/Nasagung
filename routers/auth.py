@@ -4,9 +4,10 @@ import re
 import time
 import uuid
 import logging
-from typing import Optional
-
 import requests
+
+from typing import Optional
+from fastapi import File, UploadFile
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -421,7 +422,7 @@ async def edit_profile_submit(
             content="<script>alert('로그인이 필요합니다.'); location.href='/login';</script>"
         )
 
-    try:
+   try:
         update_fields = [
             "name = %s", "gender = %s", "birthyear = %s",
             "birthday = %s", "birthtime = %s", "phone = %s", "calendarType = %s"
@@ -435,3 +436,54 @@ async def edit_profile_submit(
 
         if profile_img and profile_img.filename:
             file_ext = os.path.splitext(profile_img.filename)[1]
+            new_file_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{file_ext}"
+            file_path = os.path.join(UPLOAD_DIR, new_file_name)
+
+            contents = await profile_img.read()
+            with open(file_path, "wb") as f:
+                f.write(contents)
+
+            update_fields.append("profile_img = %s")
+            params.append(new_file_name)
+
+        params.append(user_email)
+        sql = f"UPDATE nasagung_users SET {', '.join(update_fields)} WHERE email = %s"
+
+        with db.cursor() as cursor:
+            cursor.execute(sql, tuple(params))
+            db.commit()
+
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
+            updated_user = cursor.fetchone()
+
+        curr_img = updated_user.get("profile_img") or ""
+        img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit_profile.html",
+            context={
+                "user": updated_user,
+                "img_display_path": img_path,
+                "success": True
+            }
+        )
+
+        except Exception as e:
+            with db.cursor() as cursor:
+                cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
+                user = cursor.fetchone()
+
+                curr_img = user.get("profile_img") or ""
+                img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit_profile.html",
+            context={
+                "user": user,
+                "img_display_path": img_path,
+                "error": f"수정 중 오류가 발생했습니다: {str(e)}"
+            }
+        )
