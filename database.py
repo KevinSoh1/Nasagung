@@ -1,5 +1,6 @@
 import pymysql
 import urllib.parse
+from database import get_db
 from config import RAW_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME
 
 if RAW_HOST.startswith("mysql://") or RAW_HOST.startswith("postgres://"):
