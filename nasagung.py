@@ -1,4 +1,4 @@
-﻿import os
+import os
 import logging
 from fastapi import APIRouter, Request, Form, Cookie, Depends
 from fastapi.responses import HTMLResponse, JSONResponse

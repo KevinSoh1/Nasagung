@@ -1,6 +1,6 @@
 import os
 
-# ¼Ò¼È ·Î±×ÀÎ API »ó¼ö Á¤ÀÇ
+# ì†Œì…œ ë¡œê·¸ì¸ API ìƒìˆ˜ ì •ì˜
 NAVER_CLIENT_ID = 'UF79Ckgq9nduIA5W44JW'
 NAVER_CLIENT_SECRET = os.getenv('NAVER_CLIENT_SECRET', 'KMrCXfSWK0')
 NAVER_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=naver'
@@ -9,11 +9,11 @@ KAKAO_CLIENT_ID = '3df972d36e9c33e81dc306fa0829de88'
 KAKAO_CLIENT_SECRET = 'OSyIzzbnv0QK5OxoTDRUlNTt62Cu2Bab'
 KAKAO_REDIRECT_URI = 'https://nasagung.onrender.com/callback?type=kakao'
 
-# OpenAI Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­ (Render È¯°æ º¯¼ö OPENAI_API_KEY »ç¿ë)
-# OpenAI API Å° ·Îµå
+# OpenAI í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™” (Render í™˜ê²½ ë³€ìˆ˜ OPENAI_API_KEY ì‚¬ìš©)
+# OpenAI API í‚¤ ë¡œë“œ
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Render È¯°æ º¯¼ö ·Îµå
+# Render í™˜ê²½ ë³€ìˆ˜ ë¡œë“œ
 RAW_HOST = os.getenv("DB_HOST", "nasagung-nasagung.g.aivencloud.com")
 DB_PORT = int(os.getenv("DB_PORT", 24465))
 DB_USER = os.getenv("DB_USER", "avnadmin")

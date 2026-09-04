@@ -8,7 +8,7 @@ if RAW_HOST.startswith("mysql://") or RAW_HOST.startswith("postgres://"):
 else:
     DB_HOST = RAW_HOST
 
-# DB ¿¬°á »ı¼º ÇÔ¼ö
+# DB ì—°ê²° ìƒì„± í•¨ìˆ˜
 def get_db():
     return pymysql.connect(
         host=DB_HOST,
@@ -18,11 +18,11 @@ def get_db():
         database=DB_NAME,
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
-        ssl={"ssl": {}}  # Aiven SSL ´ëÀÀ
+        ssl={"ssl": {}}  # Aiven SSL ëŒ€ì‘
     )
 
 
-# ·Î±×ÀÎ À¯Àú Á¤º¸ Á¶È¸ ÇÔ¼ö (helper)
+# ë¡œê·¸ì¸ ìœ ì € ì •ë³´ ì¡°íšŒ í•¨ìˆ˜ (helper)
 def get_current_user(user_email: str, db):
     if not user_email:
         return None
