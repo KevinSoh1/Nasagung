@@ -16,7 +16,7 @@ router = APIRouter()
 # ==========================================
 # 1. 로그인 페이지 화면 띄우기 (GET)
 # ==========================================
-@router.app.get("/login", response_class=HTMLResponse)
+@router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse(request, "login.html")
 
@@ -24,7 +24,7 @@ async def login_page(request: Request):
 # ==========================================
 # 2. 로그인 폼 제출 처리 (POST)
 # ==========================================
-@router.app.post("/login", response_class=HTMLResponse)
+@router.post("/login", response_class=HTMLResponse)
 async def login_submit(
     request: Request,
     email: str = Form(...),
@@ -76,7 +76,7 @@ async def login_submit(
 # ==========================================
 # 2-1. 소셜 로그인 콜백 처리 (네이버 / 카카오)
 # ==========================================
-@router.app.get("/callback")
+@router.get("/callback")
 async def social_callback(
     request: Request,
     type: str = "",
@@ -204,7 +204,7 @@ async def social_callback(
 # ==========================================
 # 3. 로그아웃 처리 (GET)
 # ==========================================
-@router.app.get("/logout")
+@router.get("/logout")
 async def logout():
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie(key="user_email")
@@ -214,7 +214,7 @@ async def logout():
 # ==========================================
 # 4. 회원가입 페이지 화면 띄우기 (GET)
 # ==========================================
-@router.app.get("/register", response_class=HTMLResponse)
+@router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return templates.TemplateResponse(request, "register.html")
 
@@ -222,7 +222,7 @@ async def register_page(request: Request):
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
 # ==========================================
-@router.app.post("/register", response_class=HTMLResponse)
+@router.post("/register", response_class=HTMLResponse)
 async def register_submit(
     request: Request,
     email: str = Form(...),
@@ -298,7 +298,7 @@ async def register_submit(
 # ==========================================
 # Mypage 처리 부분
 # ==========================================
-@router.app.get("/mypage", response_class=HTMLResponse)
+@router.get("/mypage", response_class=HTMLResponse)
 async def mypage(request: Request, db=Depends(get_db)):
     user_email = request.cookies.get("user_email")
     if not user_email:
@@ -350,7 +350,7 @@ async def mypage(request: Request, db=Depends(get_db)):
 # ==========================================
 # MyPage에서 정보 수정
 # ==========================================
-@router.app.get("/edit-profile", response_class=HTMLResponse)
+@router.get("/edit-profile", response_class=HTMLResponse)
 async def edit_profile_page(request: Request, db=Depends(get_db)):
     user_email = request.cookies.get("user_email")
     if not user_email:
