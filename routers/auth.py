@@ -403,7 +403,7 @@ async def edit_profile_page(request: Request, db=Depends(get_db)):
     )
 
 
-@router.app.post("/edit-profile", response_class=HTMLResponse)
+@router.post("/edit-profile", response_class=HTMLResponse)
 async def edit_profile_submit(
     request: Request,
     name: str = Form(...),
