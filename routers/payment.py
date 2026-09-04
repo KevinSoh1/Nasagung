@@ -1,8 +1,22 @@
+# 1. Standard Library (íŒŒì´ì¬ ê¸°ë³¸ ë¼ì´ë¸ŒëŸ¬ë¦¬)
+import time
+import logging
+from typing import Optional
+
+# 2. Third-Party Packages (ì™¸ë¶€ íŒ¨í‚¤ì§€)
+from fastapi import APIRouter, Request, Form, Cookie, Depends
+from fastapi.responses import HTMLResponse
+
+# 3. Local / Project Imports (ë‚´ë¶€ íŒŒì¼ ë° ëª¨ë“ˆ)
+# â€» í”„ë¡œì íŠ¸ êµ¬ì¡° ë° íŒŒì¼ëª…ì— ë§ì¶° ê²½ë¡œ(main, database, crud ë“±)ë¥¼ ìˆ˜ì •í•´ ì£¼ì„¸ìš”.
+from database import get_db             # DB ì„¸ì…˜/ì»¤ë„¥ì…˜ ì˜ì¡´ì„± ì£¼ì… í•¨ìˆ˜
+from crud import get_current_user       # ìœ ì € ì •ë³´ ì¡°íšŒ í•¨ìˆ˜
+from main import templates              # Jinja2Templates ì¸ìŠ¤í„´ìŠ¤
 
 router = APIRouter()
 
 # ==========================================
-# [°áÁ¦ÇÏ±â] pay_popup.html Ã³¸®
+# [ê²°ì œí•˜ê¸°] pay_popup.html ì²˜ë¦¬
 # ==========================================
 @router.app.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
 async def pay_popup(
@@ -11,66 +25,66 @@ async def pay_popup(
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # 1. ·Î±×ÀÎ ¿©ºÎ È®ÀÎ
+    # 1. ë¡œê·¸ì¸ ì—¬ë¶€ í™•ì¸
     current_user = get_current_user(user_email, db) if user_email else None
     
     if not current_user:
         return HTMLResponse(
-            "<script>alert('·Î±×ÀÎÀÌ ÇÊ¿äÇÑ ¼­ºñ½ºÀÔ´Ï´Ù.'); window.close();</script>"
+            "<script>alert('ë¡œê·¸ì¸ì´ í•„ìš”í•œ ì„œë¹„ìŠ¤ì…ë‹ˆë‹¤.'); window.close();</script>"
         )
 
     PRICE = 500
     msg = ""
     pay_success = False
     
-    # DB¿¡¼­ »ç¿ëÀÚÀÇ º¸À¯ Æ÷ÀÎÆ® °¡Á®¿À±â
+    # DBì—ì„œ ì‚¬ìš©ìì˜ ë³´ìœ  í¬ì¸íŠ¸ ê°€ì ¸ì˜¤ê¸°
     current_point = getattr(current_user, 'current_point', 0) if hasattr(current_user, 'current_point') else current_user.get('current_point', 0)
     current_point = int(current_point or 0)
 
-    # 2. °áÁ¦ ¹öÆ° Å¬¸¯ ½Ã (POST)
+    # 2. ê²°ì œ ë²„íŠ¼ í´ë¦­ ì‹œ (POST)
     if request.method == "POST" and action_pay == "1":
         if current_point < PRICE:
-            msg = "º¸À¯ Æ÷ÀÎÆ®°¡ ºÎÁ·ÇÕ´Ï´Ù. ÃæÀü ÈÄ ÀÌ¿ëÇØ ÁÖ¼¼¿ä."
+            msg = "ë³´ìœ  í¬ì¸íŠ¸ê°€ ë¶€ì¡±í•©ë‹ˆë‹¤. ì¶©ì „ í›„ ì´ìš©í•´ ì£¼ì„¸ìš”."
         else:
             cursor = None
             try:
                 new_point = current_point - PRICE
-                target_id = int(time.time())  # target_id¸¦ Á¤¼ö(Å¸ÀÓ½ºÅÆÇÁ)·Î Ã³¸®
+                target_id = int(time.time())  # target_idë¥¼ ì •ìˆ˜(íƒ€ì„ìŠ¤íƒ¬í”„)ë¡œ ì²˜ë¦¬
                 
-                # DB Ä¿¼­(Cursor) »ı¼º
+                # DB ì»¤ì„œ(Cursor) ìƒì„±
                 cursor = db.cursor()
 
-                # 1. nasagung_users Å×ÀÌºí Æ÷ÀÎÆ® Â÷°¨
+                # 1. nasagung_users í…Œì´ë¸” í¬ì¸íŠ¸ ì°¨ê°
                 update_user_sql = "UPDATE nasagung_users SET current_point = %s WHERE email = %s"
                 cursor.execute(update_user_sql, (new_point, user_email))
 
-                # 2. point_history Å×ÀÌºí ³»¿ª Ãß°¡
+                # 2. point_history í…Œì´ë¸” ë‚´ì—­ ì¶”ê°€
                 insert_history_sql = """
                     INSERT INTO point_history (email, type, amount, description, target_id, created_at)
-                    VALUES (%s, 'use', %s, 'AI ·Î¶Ç ¿¹Ãø ¹øÈ£ ÀüÃ¼ ÇØ±İ ±¸¸Å', %s, NOW())
+                    VALUES (%s, 'use', %s, 'AI ë¡œë˜ ì˜ˆì¸¡ ë²ˆí˜¸ ì „ì²´ í•´ê¸ˆ êµ¬ë§¤', %s, NOW())
                 """
                 cursor.execute(insert_history_sql, (user_email, PRICE, target_id))
 
-                # 3. DB º¯°æ»çÇ× Ä¿¹Ô
+                # 3. DB ë³€ê²½ì‚¬í•­ ì»¤ë°‹
                 db.commit()
 
                 pay_success = True
-                current_point = new_point  # ?? Â÷°¨µÈ Æ÷ÀÎÆ®·Î °»½ÅÇÏ¿© ÅÛÇÃ¸´¿¡ Àü´Ş
+                current_point = new_point  # ?? ì°¨ê°ëœ í¬ì¸íŠ¸ë¡œ ê°±ì‹ í•˜ì—¬ í…œí”Œë¦¿ì— ì „ë‹¬
                 
             except Exception as e:
                 db.rollback()
                 logger.error(f"Payment error: {str(e)}")
-                msg = "°áÁ¦ Ã³¸® Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù."
+                msg = "ê²°ì œ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤."
             finally:
                 if cursor:
                     cursor.close()
 
-    # 3. templates/pay_popup.html ·»´õ¸µ
+    # 3. templates/pay_popup.html ë Œë”ë§
     return templates.TemplateResponse(
         request=request,
         name="pay_popup.html",
         context={
-            "user_point": current_point,  # Â÷°¨ ÈÄ º¯°æµÈ current_point°¡ µé¾î°©´Ï´Ù.
+            "user_point": current_point,  # ì°¨ê° í›„ ë³€ê²½ëœ current_pointê°€ ë“¤ì–´ê°‘ë‹ˆë‹¤.
             "price": PRICE,
             "pay_success": pay_success,
             "msg": msg
@@ -78,7 +92,7 @@ async def pay_popup(
     )
 
 # ==========================================
-# 1. Æ÷ÀÎÆ® ÃæÀü ÆË¾÷ ÆäÀÌÁö ¿ÀÇÂ (/charge)
+# 1. í¬ì¸íŠ¸ ì¶©ì „ íŒì—… í˜ì´ì§€ ì˜¤í”ˆ (/charge)
 # ==========================================
 @router.app.get("/charge", response_class=HTMLResponse)
 async def charge_popup(
@@ -86,14 +100,14 @@ async def charge_popup(
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # ·Î±×ÀÎ Ã¼Å©
+    # ë¡œê·¸ì¸ ì²´í¬
     current_user = get_current_user(user_email, db) if user_email else None
     if not current_user:
         return HTMLResponse(
-            "<script>alert('·Î±×ÀÎÀÌ ÇÊ¿äÇÑ ¼­ºñ½ºÀÔ´Ï´Ù.'); window.close();</script>"
+            "<script>alert('ë¡œê·¸ì¸ì´ í•„ìš”í•œ ì„œë¹„ìŠ¤ì…ë‹ˆë‹¤.'); window.close();</script>"
         )
 
-    # ÇöÀç º¸À¯ Æ÷ÀÎÆ® Á¶È¸
+    # í˜„ì¬ ë³´ìœ  í¬ì¸íŠ¸ ì¡°íšŒ
     current_point = getattr(current_user, 'current_point', 0) if hasattr(current_user, 'current_point') else current_user.get('current_point', 0)
 
     return templates.TemplateResponse(
@@ -107,7 +121,7 @@ async def charge_popup(
 
 
 # ==========================================
-# 2. Æ÷ÀÎÆ® ÃæÀü ¼º°ø Ã³¸® (/charge/success)
+# 2. í¬ì¸íŠ¸ ì¶©ì „ ì„±ê³µ ì²˜ë¦¬ (/charge/success)
 # ==========================================
 @router.app.get("/charge/success", response_class=HTMLResponse)
 async def charge_success(
@@ -122,7 +136,7 @@ async def charge_success(
     try:
         cursor = db.cursor()
 
-        # 1. ±âÁ¸ »ç¿ëÀÚÀÇ ÇöÀç Æ÷ÀÎÆ® Á¶È¸
+        # 1. ê¸°ì¡´ ì‚¬ìš©ìì˜ í˜„ì¬ í¬ì¸íŠ¸ ì¡°íšŒ
         cursor.execute("SELECT current_point FROM nasagung_users WHERE email = %s", (user_email,))
         row = cursor.fetchone()
         
@@ -132,24 +146,24 @@ async def charge_success(
 
         new_point = int(current_p or 0) + int(amount)
 
-        # 2. nasagung_users Æ÷ÀÎÆ® ¾÷µ¥ÀÌÆ®
+        # 2. nasagung_users í¬ì¸íŠ¸ ì—…ë°ì´íŠ¸
         update_sql = "UPDATE nasagung_users SET current_point = %s WHERE email = %s"
         cursor.execute(update_sql, (new_point, user_email))
 
-        # 3. point_history ³»¿ª Ãß°¡
+        # 3. point_history ë‚´ì—­ ì¶”ê°€
         target_id = int(time.time())
         insert_history_sql = """
             INSERT INTO point_history (email, type, amount, description, target_id, created_at)
-            VALUES (%s, 'charge', %s, 'Æ÷ÀÎÆ® ÃæÀü', %s, NOW())
+            VALUES (%s, 'charge', %s, 'í¬ì¸íŠ¸ ì¶©ì „', %s, NOW())
         """
         cursor.execute(insert_history_sql, (user_email, amount, target_id))
 
         db.commit()
 
-        # 4. °áÁ¦ ¼º°ø ½Ã ºÎ¸ğ Ã¢ Æ÷ÀÎÆ® ¾÷µ¥ÀÌÆ® ¹× ÆË¾÷ ´İ±â Script ¹İÈ¯
+        # 4. ê²°ì œ ì„±ê³µ ì‹œ ë¶€ëª¨ ì°½ í¬ì¸íŠ¸ ì—…ë°ì´íŠ¸ ë° íŒì—… ë‹«ê¸° Script ë°˜í™˜
         return HTMLResponse(f"""
             <script>
-                alert('{amount:,} Æ÷ÀÎÆ® ÃæÀüÀÌ ¿Ï·áµÇ¾ú½À´Ï´Ù.');
+                alert('{amount:,} í¬ì¸íŠ¸ ì¶©ì „ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.');
                 if (window.opener && !window.opener.closed) {{
                     if (typeof window.opener.updateTopPoint === 'function') {{
                         window.opener.updateTopPoint({new_point});
@@ -164,7 +178,7 @@ async def charge_success(
     except Exception as e:
         db.rollback()
         logger.error(f"Charge Success Processing Error: {str(e)}")
-        return HTMLResponse("<script>alert('Æ÷ÀÎÆ® Àû¸³ Ã³¸® Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.'); window.close();</script>")
+        return HTMLResponse("<script>alert('í¬ì¸íŠ¸ ì ë¦½ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.'); window.close();</script>")
     finally:
         if cursor:
             cursor.close()
