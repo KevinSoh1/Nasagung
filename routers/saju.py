@@ -1,3 +1,7 @@
+# ==========================================
+# 명반 분석 API (POST /chat)
+# ==========================================
+
 # 1. Standard Library (파이썬 기본 라이브러리)
 import logging
 from typing import Optional
@@ -12,9 +16,6 @@ from database import get_db
 
 router = APIRouter()
 
-# ==========================================
-# 명반 분석 API (POST /chat)
-# ==========================================
 @router.post("/chat")
 async def analyze_saju(
     request: Request,
@@ -52,5 +53,46 @@ async def analyze_saju(
 
         # 로그인 여부 검증
         is_logged_in = bool(user_email)
+
+        if is_logged_in:
+            return JSONResponse({
+                "is_logged_in": True,
+                "result": full_result
+            })
+        else:
+           # 전체 텍스트 길이를 구한 뒤 1/3 지점 계산 (정수 나눗셈 //)
+            one_third_length = len(full_result) // 3
+            
+            return JSONResponse({
+                "is_logged_in": False,
+                "result": full_result[:one_third_length]
+            })
+
+    except Exception as e:
+        logger.error(f"Saju Analysis Error: {str(e)}")
+        return JSONResponse({"error": "분석 중 오류가 발생했습니다."}, status_code=500)
+
+
+# ==========================================
+# 명반 결과물 출력 Response.html 라우터 등록
+# ==========================================
+@router.get("/response.html", response_class=HTMLResponse)
+async def read_response_page(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db),
+):
+    current_user = get_current_user(user_email, db) if user_email else None
+    
+    file_path = os.path.join(templates_dir, "response.html")
+    if os.path.exists(file_path):
+        return templates.TemplateResponse(
+            request=request,
+            name="response.html",
+            context={"user": current_user, "user_email": user_email}
+        )
+    return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
+
+
 
 
