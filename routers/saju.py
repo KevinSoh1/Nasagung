@@ -93,6 +93,3 @@ async def read_response_page(
         )
     return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
 
-
-
-
