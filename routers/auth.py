@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import File, UploadFile
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
-from nagagung import get_db
+from database import get_db
 
 router = APIRouter()
 
