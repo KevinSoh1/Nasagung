@@ -14,6 +14,8 @@ from database import get_db             # DB 세션 의존성 Injection 함수
 from crud import get_current_user       # 유저 조회 함수
 from main import templates              # Jinja2Templates 인스턴스
 
+from databse import get_db
+
 router = APIRouter()
 
 # ==========================================
