@@ -422,7 +422,7 @@ async def edit_profile_submit(
             content="<script>alert('로그인이 필요합니다.'); location.href='/login';</script>"
         )
 
-   try:
+    try:
         update_fields = [
             "name = %s", "gender = %s", "birthyear = %s",
             "birthday = %s", "birthtime = %s", "phone = %s", "calendarType = %s"
@@ -470,13 +470,13 @@ async def edit_profile_submit(
             }
         )
 
-        except Exception as e:
-            with db.cursor() as cursor:
-                cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
-                user = cursor.fetchone()
+    except Exception as e:
+        with db.cursor() as cursor:
+            cursor.execute("SELECT * FROM nasagung_users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
 
-                curr_img = user.get("profile_img") or ""
-                img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
+            curr_img = user.get("profile_img") or ""
+            img_path = f"/static/uploads/{curr_img}" if "_" in curr_img else f"/static/images/{curr_img}"
 
         return templates.TemplateResponse(
             request=request,
