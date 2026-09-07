@@ -82,8 +82,6 @@ async def read_root(
 # ==========================================
 from routers import auth, saju, gunghap, lotto, payment
 
-app.include_router(config.router)
-app.include_router(database.router)
 app.include_router(auth.router)
 app.include_router(saju.router)
 app.include_router(gunghap.router)
