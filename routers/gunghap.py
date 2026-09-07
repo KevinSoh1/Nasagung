@@ -21,8 +21,8 @@ router = APIRouter()
 # ==========================================
 
 # 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
-@router.app.get("/gunghap.html", response_class=HTMLResponse)
-@router.app.get("/gunghap", response_class=HTMLResponse)
+@router.get("/gunghap.html", response_class=HTMLResponse)
+@router.get("/gunghap", response_class=HTMLResponse)
 async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
     # 1. 로그인 쿠키(user_email)가 있는 경우 DB에서 유저 조회
     current_user = get_current_user(user_email, db) if user_email else None
@@ -34,7 +34,7 @@ async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(
         }
     )
 
-@router.app.get("/gunghapResult.html", response_class=HTMLResponse)
+@router.get("/gunghapResult.html", response_class=HTMLResponse)
 async def get_gunghap_result_page(request: Request, user_email: Optional[str] = Cookie(None)):
     is_logged_in = bool(user_email)
     return templates.TemplateResponse(
@@ -44,7 +44,7 @@ async def get_gunghap_result_page(request: Request, user_email: Optional[str] = 
     )
 
 # 2. 궁합 분석 API (POST /gunghap)
-@router.app.post("/gunghap")
+@router.post("/gunghap")
 async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(None)):
     try:
         data = await request.json()
