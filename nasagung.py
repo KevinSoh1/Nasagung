@@ -80,7 +80,7 @@ async def read_root(
 # ==========================================
 # 기능별 라우터(모듈) 등록
 # ==========================================
-from routers import config, database, auth, saju, gunghap, lotto, payment
+from routers import auth, saju, gunghap, lotto, payment
 
 app.include_router(config.router)
 app.include_router(database.router)
