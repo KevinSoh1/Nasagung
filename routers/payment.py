@@ -10,14 +10,14 @@ from fastapi.responses import HTMLResponse
 # 3. Local / Project Imports (내부 파일 및 모듈)
 # ※ 프로젝트 구조 및 파일명에 맞춰 경로(main, database, crud 등)를 수정해 주세요.
 from database import get_db, get_current_user            # DB 세션/커넥션 의존성 주입 함수,유저 정보 조회 함수
-from main import templates              # Jinja2Templates 인스턴스
+from nasagung import templates              # Jinja2Templates 인스턴스
 
 router = APIRouter()
 
 # ==========================================
 # [결제하기] pay_popup.html 처리
 # ==========================================
-@router.app.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
+@router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
 async def pay_popup(
     request: Request,
     action_pay: Optional[str] = Form(None),
@@ -93,7 +93,7 @@ async def pay_popup(
 # ==========================================
 # 1. 포인트 충전 팝업 페이지 오픈 (/charge)
 # ==========================================
-@router.app.get("/charge", response_class=HTMLResponse)
+@router.get("/charge", response_class=HTMLResponse)
 async def charge_popup(
     request: Request,
     user_email: Optional[str] = Cookie(None),
@@ -122,7 +122,7 @@ async def charge_popup(
 # ==========================================
 # 2. 포인트 충전 성공 처리 (/charge/success)
 # ==========================================
-@router.app.get("/charge/success", response_class=HTMLResponse)
+@router.get("/charge/success", response_class=HTMLResponse)
 async def charge_success(
     request: Request,
     user_email: str,
