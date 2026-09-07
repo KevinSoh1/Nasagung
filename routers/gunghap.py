@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 # ※ 아래 모듈 이름과 경로(main, database, models 등)는 실제 프로젝트 구조에 맞춰 수정하세요.
 from database import get_db             # DB 세션 의존성 Injection 함수
 from database import get_current_user       # 유저 조회 함수
-from main import templates              # Jinja2Templates 인스턴스
+from nasagung import templates              # Jinja2Templates 인스턴스
 
 router = APIRouter()
 
