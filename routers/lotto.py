@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request, Cookie, Depends, HTMLResponse
+from fastapi import APIRouter, Request, Cookie, Depends
+from fastapi.responses import HTMLResponse
 from typing import Optional
 from database import get_db, get_current_user
-# main.py 또는 config에서 client, templates 등을 가져와 사용
-from main import templates, client, logger
+from nasagung import templates, client, logger
 
 router = APIRouter()
 
