@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 # ※ 프로젝트 구조에 맞춰 database 모듈 경로는 수정해 주세요.
 from database import get_db, get_current_user
 
+templates = Jinja2Templates(directory="templates")
 router = APIRouter()
 
 @router.post("/chat")
