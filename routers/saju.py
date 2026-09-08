@@ -8,14 +8,17 @@ from typing import Optional
 
 # 2. Third-Party Packages (외부 패키지)
 import openai  # openai.chat.completions.create(...) 직접 호출 시 필요
+from openai import OpenAI
+from config import OPENAI_API_KEY
 from fastapi import APIRouter, Request, Cookie, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse,JSONResponse
 # 3. Local / Project Imports (내부 파일 및 모듈)
 # ※ 프로젝트 구조에 맞춰 database 모듈 경로는 수정해 주세요.
-from fastapi.templating import Jinja2Templates
 from database import get_db, get_current_user
+from config import OPENAI_API_KEY
 
-templates = Jinja2Templates(directory="templates")
+logger = logging.getLogger(__name__)
+client = OpenAI(api_key=OPENAI_API_KEY)
 router = APIRouter()
 
 @router.post("/chat")
@@ -42,7 +45,8 @@ async def analyze_saju(
         """
 
         # GPT-4o-mini 호출
-        completion = openai.chat.completions.create(
+        #completion = openai.chat.completions.create(
+        completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "당신은 정교하고 신뢰감 있는 전문적인 명반 및 사주 전문 명리학자입니다.\n 사용자 정보를 바탕으로 깊이 있는 사주/운세 풀이를 제공해 주세요.\n가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."},
