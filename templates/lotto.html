@@ -16,7 +16,7 @@
   	}
 
   	a:hover {
-    	    color: gray;             /* 마우스 올렸을 때 색상 (선택사항) */
+    	    color: gray;             /* 마우스 올렸을 때 색상 */
   	}
 
   	a:active {
@@ -159,23 +159,10 @@
         .notice-guest a { color: #0056b3; text-decoration: underline !important; font-weight: 700; }
         .notice-member { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
         .notice-member span { color: #d9534f; font-weight: 700; cursor: pointer; text-decoration: underline; }
+        .notice-paid { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 
         .btn-submit { background: var(--accent-gold); color: #000; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 10px rgba(207,181,59,0.3); }
         .btn-submit:hover { background: #b89e2b; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(207,181,59,0.4); }
-
-        /* 우측 퀵메뉴 */
-        .quick-menu { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
-        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; }
-        .quick-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateX(5px); border-color: var(--accent-gold); }
-        .q-icon { font-size: 2.5rem; }
-        .q-text strong { display: block; font-size: 1.15rem; color: var(--white); margin-bottom: 5px; }
-        .q-text span { font-size: 0.85rem; color: var(--text-muted); }
-
-        .promo-card { background: linear-gradient(135deg, #1e295d, #0a1128); border: 1px solid rgba(207, 181, 59, 0.3); padding: 25px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
-        .promo-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(207,181,59,0.1) 0%, transparent 70%); }
-        .promo-text strong { display: block; font-size: 1.2rem; color: var(--accent-gold); margin-bottom: 5px; }
-        .promo-text p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
-        .promo-gift { font-size: 3rem; }
 
         /* 애니메이션 효과 */
         @keyframes ballPopIn {
@@ -253,7 +240,7 @@
                                     <option value="酉(유)" {{ 'selected' if '酉' in u_time else '' }}>酉(유)(17:30 ~ 19:29)</option>
                                     <option value="戌(술)" {{ 'selected' if '戌' in u_time else '' }}>戌(술)(19:30 ~ 21:29)</option>
                                     <option value="亥(해)" {{ 'selected' if '亥' in u_time else '' }}>亥(해)(21:30 ~ 23:29)</option>
-									<option value="모름" {{ 'selected' if '모름' in u_time else '' }}>모름</option>
+                                    <option value="모름" {{ 'selected' if '모름' in u_time else '' }}>모름</option>
                                 </select>
                             </div>
                         </div>
@@ -297,18 +284,7 @@
                     </button>
                 </form>
             </section>
-           <!-- 💡 JS로 quickMenu.html을 불러와서 div 안에 삽입 
-    			<script>
-        			fetch('quickMenu.html')
-            		.then(response => response.text())
-            		.then(data => {
-                		document.getElementById('quick-Menu').innerHTML = data;
-            		});
-    			</script>
-			-->
-			<!-- 퀵 메뉴가 들어갈 위치 시작
-				<div id="quick-Menu"></div>
-      		퀵 메뉴가 들어갈 위치 끝 -->	
+
         	{% include 'quckMenu.html' %}
         </div>
     </div>
@@ -324,7 +300,10 @@ genderBtns.forEach(function(btn) {
     });
 });
 
+// 💡 백엔드에서 넘겨준 회원 및 결제 상태 판별
 const isMember = {{ 'true' if user else 'false' }};
+const isPaid = {{ 'true' if is_paid else 'false' }};
+
 let globalGamesData = [];
 
 // 서버에서 전달된 로또 생성 결과 문자열 (POST 요청 후 전달받음)
@@ -341,6 +320,7 @@ function processLottoResult(aiText) {
     container.innerHTML = '';
     globalGamesData = []; 
 
+    // 줄바꿈 기준으로 각 게임 분리
     const lines = aiText.split('\n');
     for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx];
@@ -358,49 +338,48 @@ function processLottoResult(aiText) {
             }
         }
     }
-    
-    if (globalGamesData.length === 0) {
-        const rawNumbers = aiText.match(/\d+/g);
-        if (rawNumbers) {
-            const fallbackNums = [];
-            for (let x = 0; x < rawNumbers.length; x++) {
-                const n = Number(rawNumbers[x]);
-                if (n >= 1 && n <= 45) fallbackNums.push(n);
-            }
-            for (let i = 0; i < fallbackNums.length; i += 6) {
-                let chunk = fallbackNums.slice(i, i + 6);
-                if (chunk.length === 6) {
-                    globalGamesData.push(chunk);
-                }
-            }
-        }
-    }
-
-    if (globalGamesData.length > 5) {
-        globalGamesData = globalGamesData.slice(0, 5);
-    }
 
     if (globalGamesData.length === 0) {
         alert("유효한 로또 게임 번호가 생성되지 않았습니다.");
         return;
     }
 
-    // 맛보기 1게임만 애니메이션 표시
-    renderLottoGameRow(globalGamesData[0], 1, 0);
+    let currentDelay = 0;
 
-    setTimeout(function() {
-        const noticeDiv = document.createElement('div');
-        noticeDiv.className = 'lotto-notice-box';
-        
-        if (!isMember) {
-            noticeDiv.className += ' notice-guest';
-            noticeDiv.innerHTML = '⚠️ 비회원은 맛보기용 1게임만 제공됩니다.<br>전체 5게임 조합 및 천기 분석 결과를 보시려면<br><a href="/register">회원가입</a>을 진행해 주세요.';
-        } else {
-            noticeDiv.className += ' notice-member';
-            noticeDiv.innerHTML = '🔒 회원은 기본 1게임이 무료 제공됩니다.<br>나머지 대박 추천 조합을 모두 열람하시려면<br><span onclick="openPaymentPopup()">[구매하기]</span>를 완료해 주세요.';
+    // 💡 결제 완료 회원: 전달받은 전체 게임 표시 (최대 5게임)
+    if (isPaid) {
+        for (let i = 0; i < globalGamesData.length; i++) {
+            renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
+            currentDelay += 480; 
         }
-        container.appendChild(noticeDiv);
-    }, 80 * 6 + 200);
+
+        setTimeout(function() {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.className = 'lotto-notice-box notice-paid';
+            noticeDiv.innerHTML = '🎉 결제 완료! 천기누설 프리미엄 5개 조합이 모두 해제되었습니다.';
+            container.appendChild(noticeDiv);
+        }, currentDelay + 200);
+
+    } else {
+        // 💡 미결제 회원 또는 비회원: 첫 번째 1게임만 맛보기로 표시
+        renderLottoGameRow(globalGamesData[0], 1, 0);
+
+        setTimeout(function() {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.className = 'lotto-notice-box';
+            
+            if (!isMember) {
+                // 비회원일 때
+                noticeDiv.className += ' notice-guest';
+                noticeDiv.innerHTML = '⚠️ 비회원은 맛보기용 1게임만 제공됩니다.<br>전체 5게임 조합 및 천기 분석 결과를 보시려면<br><a href="/register">회원가입</a>을 진행해 주세요.';
+            } else {
+                // 미결제 회원일 때
+                noticeDiv.className += ' notice-member';
+                noticeDiv.innerHTML = '🔒 회원은 기본 1게임이 무료 제공됩니다.<br>나머지 대박 추천 조합을 모두 열람하시려면<br><span onclick="openPaymentPopup()">[구매하기 (결제)]</span>를 완료해 주세요.';
+            }
+            container.appendChild(noticeDiv);
+        }, 80 * 6 + 200);
+    }
 }
 
 function renderLottoGameRow(numbers, gameIndex, startDelay) {
@@ -432,25 +411,6 @@ function renderLottoGameRow(numbers, gameIndex, startDelay) {
     });
 
     container.appendChild(gameRow);
-}
-
-function renderRemainingGames() {
-    if (globalGamesData.length <= 1) {
-        alert("추가 생성된 로또 조합이 존재하지 않습니다.");
-        return;
-    }
-    
-    let currentDelay = 0;
-    for (let i = 1; i < globalGamesData.length; i++) {
-        renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
-        currentDelay += 480; 
-    }
-}
-
-function completePayment() {
-    const noticeBox = document.querySelector('.lotto-notice-box');
-    if (noticeBox) noticeBox.remove();
-    renderRemainingGames(); 
 }
 
 function openPaymentPopup() {
