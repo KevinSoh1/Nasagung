@@ -1,41 +1,63 @@
-# 1. Standard Library (파이썬 기본 라이브러리)
+# 1. Standard Library
+import os
 import logging
 from typing import Optional
 
-# 2. Third-Party Packages (외부 패키지)
-from openai import OpenAI  # client 사용을 위해 필요
+# 2. Third-Party Packages
+from openai import OpenAI
 from fastapi import APIRouter, Request, Cookie, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-# 3. Local / Project Imports (내부 파일 및 모듈)
-# ※ 아래 모듈 이름과 경로(main, database, models 등)는 실제 프로젝트 구조에 맞춰 수정하세요.
-from database import get_db             # DB 세션 의존성 Injection 함수
-from database import get_current_user       # 유저 조회 함수
-from nasagung import templates              # Jinja2Templates 인스턴스
+# 3. Local / Project Imports
+from database import get_db, get_current_user
+from config import OPENAI_API_KEY
+
+# 로거 및 OpenAI 클라이언트 설정
+logger = logging.getLogger(__name__)
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# --------------------------------------------------------------------------
+# [경로 설정] routers/ 폴더에서 상위 루트의 templates/ 디렉토리 바라보기
+# --------------------------------------------------------------------------
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(CURRENT_DIR)
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter()
 
 # ==========================================
-# 궁합 입력 처리 부분
+# 궁합 페이지 & 결과 페이지 GET 라우트
 # ==========================================
 
-# 1. 궁합 입력 페이지 & 결과 페이지 GET 라우트
 @router.get("/gunghap.html", response_class=HTMLResponse)
 @router.get("/gunghap", response_class=HTMLResponse)
-async def get_gunghap_page(request: Request, user_email: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
-    # 1. 로그인 쿠키(user_email)가 있는 경우 DB에서 유저 조회
-    current_user = get_current_user(user_email, db) if user_email else None
+async def get_gunghap_page(
+    request: Request, 
+    user_email: Optional[str] = Cookie(None), 
+    db: Session = Depends(get_db)
+):
+    current_user = None
+    if user_email:
+        try:
+            current_user = get_current_user(user_email, db)
+        except Exception as e:
+            logger.warning(f"유저 조회 실패: {e}")
+
     return templates.TemplateResponse(
         request=request, 
         name="gunghap.html",
-        context={
-            "user": current_user
-        }
+        context={"user": current_user}
     )
 
 @router.get("/gunghapResult.html", response_class=HTMLResponse)
-async def get_gunghap_result_page(request: Request, user_email: Optional[str] = Cookie(None)):
+async def get_gunghap_result_page(
+    request: Request, 
+    user_email: Optional[str] = Cookie(None)
+):
     is_logged_in = bool(user_email)
     return templates.TemplateResponse(
         request=request, 
@@ -43,9 +65,15 @@ async def get_gunghap_result_page(request: Request, user_email: Optional[str] = 
         context={"is_logged_in": is_logged_in}
     )
 
-# 2. 궁합 분석 API (POST /gunghap)
+# ==========================================
+# 궁합 분석 API (POST /gunghap)
+# ==========================================
+
 @router.post("/gunghap")
-async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(None)):
+async def analyze_gunghap(
+    request: Request, 
+    user_email: Optional[str] = Cookie(None)
+):
     try:
         data = await request.json()
         
@@ -63,7 +91,6 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         partner_birthtime = data.get("partnerBirthtime", "")
         partner_calendar = data.get("partnerCalendarType", "")
 
-        # OpenAI 궁합 분석 전용 프롬프트 구성
         prompt = f"""
         다음 두 사람의 명식을 대조하여 인연과 궁합을 정밀하게 분석해 주세요.
         
@@ -72,7 +99,6 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         - 성별: {my_gender}
         - 생년월일: {my_birthdate} ({my_calendar})
         - 출생시간: {my_birthtime}
-        
 
         [두 번째 사람 (상대방)]
         - 이름: {partner_name}
@@ -94,17 +120,12 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
 2. 두 사람의 오행 조화, 성향 차이, 그리고 함께하면 좋은 발전적인 방향을 상세히 설명해 주세요.
 3. 가독성이 좋게 단락을 나누고 markdown 서식을 활용하여 친절하게 설명해 주세요."""
 
+        # OpenAI 호출 (client 객체 사용)
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {
-                    "role": "system", 
-                    "content": system_instruction
-                },
-                {
-                    "role": "user", 
-                    "content": prompt
-                }
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt}
             ],
             temperature=0.7
         )
@@ -112,7 +133,6 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
         full_result = completion.choices[0].message.content.strip()
         is_logged_in = bool(user_email)
 
-        # 로그인 여부에 따라 결과 텍스트 길이 제어 (비로그인 시 1/3 제공)
         if is_logged_in:
             return JSONResponse({"is_logged_in": True, "result": full_result})
         else:
@@ -120,5 +140,7 @@ async def analyze_gunghap(request: Request, user_email: Optional[str] = Cookie(N
             return JSONResponse({"is_logged_in": False, "result": full_result[:one_third_len]})
 
     except Exception as e:
-        logger.error(f"Gunghap Analysis Error: {str(e)}")
-        return JSONResponse({"error": "궁합 분석 중 오류가 발생했습니다."}, status_code=500)
+        # 콘솔에 구체적인 에러 메시지 출력
+        print(f"================ [GUNGHAP ERROR]: {e} ================")
+        logger.error(f"Gunghap Analysis Error: {str(e)}", exc_info=True)
+        return JSONResponse({"error": f"궁합 분석 중 오류가 발생했습니다: {str(e)}"}, status_code=500)
