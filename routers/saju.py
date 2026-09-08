@@ -3,18 +3,28 @@
 # ==========================================
 
 # 1. Standard Library (파이썬 기본 라이브러리)
+import os
 import logging
+from fastapi import APIRouter, Request, Cookie, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from typing import Optional
 from openai import OpenAI
 from config import OPENAI_API_KEY
-from fastapi import APIRouter, Request, Cookie, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from database import get_db, get_current_user
 from config import OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
+#--------------------------------------------------------------------------
+# [경로 설정] 현재 파일(routers/saju.py) 위치에서 프로젝트 루트의 templates/ 찾기
+# --------------------------------------------------------------------------
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))          # .../src/routers
+BASE_DIR = os.path.dirname(CURRENT_DIR)                           # .../src (프로젝트 루트)
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")               # .../src/templates
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
 router = APIRouter()
 
 @router.post("/chat")
@@ -84,14 +94,37 @@ async def read_response_page(
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db),
 ):
-    current_user = get_current_user(user_email, db) if user_email else None
-    
-    file_path = os.path.join(templates_dir, "response.html")
-    if os.path.exists(file_path):
+    try:
+        # 1. 사용자 정보 안전하게 가져오기
+        current_user = None
+        if user_email:
+            try:
+                current_user = get_current_user(user_email, db)
+            except Exception as user_err:
+                logger.warning(f"Failed to fetch user in response page: {user_err}")
+
+        # 2. templates/response.html 파일 존재 확인
+        file_path = os.path.join(TEMPLATES_DIR, "response.html")
+        if not os.path.exists(file_path):
+            logger.error(f"Template file not found at: {file_path}")
+            return HTMLResponse(
+                content=f"<h1>response.html 파일을 찾을 수 없습니다.</h1><p>경로: {file_path}</p>", 
+                status_code=404
+            )
+
+        # 3. Jinja2 템플릿 렌더링
         return templates.TemplateResponse(
             request=request,
             name="response.html",
             context={"user": current_user, "user_email": user_email}
         )
-    return HTMLResponse(content="<h1>response.html 파일을 찾을 수 없습니다.</h1>", status_code=404)
+
+    except Exception as e:
+        # 터미널 콘솔 및 로그에 구체적인 500 에러 원인 출력
+        print(f"================ [500 ERROR] /response.html : {e} ================")
+        logger.error(f"Error rendering response.html: {str(e)}", exc_info=True)
+        return HTMLResponse(
+            content=f"<h1>서버 내부 오류가 발생했습니다.</h1><p>{str(e)}</p>", 
+            status_code=500
+        )
 
