@@ -300,7 +300,7 @@ genderBtns.forEach(function(btn) {
     });
 });
 
-// 💡 백엔드에서 넘겨준 회원 및 결제 상태 판별
+// 백엔드에서 넘겨준 회원 및 결제 상태 판별
 const isMember = {{ 'true' if user else 'false' }};
 const isPaid = {{ 'true' if is_paid else 'false' }};
 
@@ -308,6 +308,21 @@ let globalGamesData = [];
 
 // 서버에서 전달된 로또 생성 결과 문자열 (POST 요청 후 전달받음)
 const serverResult = `{{ result if result else '' }}`;
+
+// 💡 [추가] 결제 팝업창(pay_popup)으로부터 완료 이벤트를 수신하는 리스너
+window.addEventListener("message", function(event) {
+    if (event.data && event.data.status === "PAYMENT_COMPLETE") {
+        alert("결제가 성공적으로 완료되었습니다! 5개 전체 추천 조합을 불러옵니다.");
+        
+        // 결제 상태가 DB에 반영된 후 폼을 자동 재전송하여 5개 번호를 새로 받아옴
+        const lottoForm = document.getElementById("lottoForm");
+        if (lottoForm) {
+            lottoForm.submit();
+        } else {
+            window.location.reload();
+        }
+    }
+}, false);
 
 document.addEventListener("DOMContentLoaded", function() {
     if (serverResult && serverResult.trim() !== '') {
@@ -346,7 +361,7 @@ function processLottoResult(aiText) {
 
     let currentDelay = 0;
 
-    // 💡 결제 완료 회원: 전달받은 전체 게임 표시 (최대 5게임)
+    // 결제 완료 회원: 전달받은 전체 게임 표시 (최대 5게임)
     if (isPaid) {
         for (let i = 0; i < globalGamesData.length; i++) {
             renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
@@ -361,7 +376,7 @@ function processLottoResult(aiText) {
         }, currentDelay + 200);
 
     } else {
-        // 💡 미결제 회원 또는 비회원: 첫 번째 1게임만 맛보기로 표시
+        // 미결제 회원 또는 비회원: 첫 번째 1게임만 맛보기로 표시
         renderLottoGameRow(globalGamesData[0], 1, 0);
 
         setTimeout(function() {
@@ -418,7 +433,7 @@ function openPaymentPopup() {
     const height = 500;
     const left = (window.screen.width / 2) - (width / 2);
     const top = (window.screen.height / 2) - (height / 2);
-	window.open("/pay_popup", "NasaGungPay", `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=no`);
+    window.open("/pay_popup", "NasaGungPay", `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=no`);
 }
 </script>
 </body>
