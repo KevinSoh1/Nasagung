@@ -5,15 +5,11 @@
 # 1. Standard Library (파이썬 기본 라이브러리)
 import logging
 from typing import Optional
-
-# 2. Third-Party Packages (외부 패키지)
-import openai  # openai.chat.completions.create(...) 직접 호출 시 필요
 from openai import OpenAI
 from config import OPENAI_API_KEY
 from fastapi import APIRouter, Request, Cookie, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse,JSONResponse
-# 3. Local / Project Imports (내부 파일 및 모듈)
-# ※ 프로젝트 구조에 맞춰 database 모듈 경로는 수정해 주세요.
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+
 from database import get_db, get_current_user
 from config import OPENAI_API_KEY
 
