@@ -420,22 +420,6 @@ function openPaymentPopup() {
     const top = (window.screen.height / 2) - (height / 2);
 	window.open("/pay_popup", "NasaGungPay", `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=no`);
 }
-// 💡 결제 팝업창(pay_popup)에서 보내는 결제 완료 메시지 수신
-window.addEventListener("message", function(event) {
-    // 보안을 위해 필요시 event.origin 검증을 추가할 수 있습니다.
-    if (event.data && event.data.status === "PAYMENT_COMPLETE") {
-        alert("결제가 성공적으로 완료되었습니다! 전체 추천 번호를 불러옵니다.");
-        
-        // 방법 1: 현재 폼(lottoForm)을 재전송하여 5개 번호를 새로 받아옴 (추천)
-        const lottoForm = document.getElementById("lottoForm");
-        if (lottoForm) {
-            lottoForm.submit();
-        } else {
-            // 방법 2: 폼 제출이 어려울 경우 페이지 새로고침
-            window.location.reload();
-        }
-    }
-}, false);
 </script>
 </body>
 </html>
