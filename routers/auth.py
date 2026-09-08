@@ -7,10 +7,12 @@ import logging
 import requests
 
 from typing import Optional
-from fastapi import File, UploadFile
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from database import get_db
+
+templates = Jinja2Templates(directory="templates")
 
 router = APIRouter()
 
