@@ -71,7 +71,6 @@ async def lotto_page(
     if user_email:
         try:
             current_user = get_current_user(user_email, db)
-            # point_history 내역 검사하여 결제 여부 결정
             is_paid_user = check_lotto_payment(user_email, db)
         except Exception as e:
             logger.warning(f"유저 정보 조회 중 예외: {e}")
@@ -83,12 +82,14 @@ async def lotto_page(
             context={
                 "user": current_user,
                 "result": None,
+                "first_game_str": "",
                 "is_paid": is_paid_user,
                 "service_title": "로또 번호 예측"
             }
         )
 
     displayed_result = None
+    first_game_input = ""
 
     try:
         form_data = await request.form()
@@ -99,38 +100,57 @@ async def lotto_page(
         gender = form_data.get("gender", "")
         calendarType = form_data.get("calendarType", "")
         fiveElements = form_data.get("fiveElements", "")
+        first_game_input = form_data.get("firstGame", "").strip() # 이전 1게임 번호 수신
 
         birthdate = f"{birthYear}-{birthDay}"
         service_title = "로또 번호 예측"
         system_role = "당신은 타고난 사주 오행과 천기의 흐름을 바탕으로 행운의 숫자를 산출하는 전문 숫자 분석가입니다."
-        
-        prompt_content = (
-            "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표', '줄바꿈' 기호만 사용하여 답변을 작성하세요. "
-            "절대로 인사말, 설명글, 마크다운 기호를 포함해선 안 됩니다.\n\n"
-            f"[사용자 정보]\n- 이름: {name}\n- 성별: {gender}\n- 생년월일: {birthdate} ({calendarType})\n- 출생시간: {birthTime}\n- 집중오행기운: {fiveElements}\n\n"
-            "[요구사항]\n1. 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
-            "2. 총 5줄(5게임)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
-            "3. 각 줄의 숫자는 쉼표(,)로 구분하세요.\n"
-            "4. ★중요: 번호 순서 정렬 없이 무작위 추출 순서 그대로 뒤섞어 출력하세요.\n\n"
-            "[출력 예시]\n42,7,19,3,32,11\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
-        )
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_role},
-                {"role": "user", "content": prompt_content}
-            ],
-            temperature=0.8
-        )
-        full_lotto_result = response.choices[0].message.content.strip()
+        # Case A: 결제 유저 + 이전 1게임 번호가 전달된 경우 -> 1게임 유지 + 4게임 새로 생성
+        if is_paid_user and first_game_input:
+            prompt_content = (
+                "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표', '줄바꿈' 기호만 사용하여 답변을 작성하세요.\n\n"
+                f"[사용자 정보]\n- 이름: {name}\n- 생년월일: {birthdate}\n- 집중오행기운: {fiveElements}\n\n"
+                "[요구사항]\n1. 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
+                "2. 총 4줄(4게임)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
+                "3. 각 줄의 숫자는 쉼표(,)로 구분하세요.\n"
+                "4. 번호 정렬 없이 무작위 추출 순서 그대로 뒤섞어 출력하세요.\n\n"
+                "[출력 예시]\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
+            )
 
-        # 결제 성공 고객 -> 5게임 전체 반환 / 미결제 고객 -> 1게임만 반환
-        if is_paid_user:
-            displayed_result = full_lotto_result
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_role},
+                    {"role": "user", "content": prompt_content}
+                ],
+                temperature=0.8
+            )
+            extra_4_games = response.choices[0].message.content.strip()
+            
+            # 기존 1게임 + 신규 4게임 결합 (총 5게임)
+            displayed_result = f"{first_game_input}\n{extra_4_games}"
+
+        # Case B: 최초 번호 추출 (미결제 또는 1게임 첫 생성)
         else:
-            lines = [line.strip() for line in full_lotto_result.split("\n") if line.strip()]
-            displayed_result = lines[0] if lines else full_lotto_result
+            prompt_content = (
+                "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표'만 사용하여 답변을 작성하세요.\n\n"
+                f"[사용자 정보]\n- 이름: {name}\n- 생년월일: {birthdate}\n- 집중오행기운: {fiveElements}\n\n"
+                "[요구사항]\n1. 1부터 45 사이의 무작위 로또 번호 6개(1게임)만 한 줄에 출력하세요.\n"
+                "2. 각 숫자는 쉼표(,)로 구분하세요.\n\n"
+                "[출력 예시]\n42,7,19,3,32,11"
+            )
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_role},
+                    {"role": "user", "content": prompt_content}
+                ],
+                temperature=0.8
+            )
+            displayed_result = response.choices[0].message.content.strip()
+            first_game_input = displayed_result
 
     except Exception as e:
         logger.error(f"Lotto prediction error: {str(e)}")
@@ -142,6 +162,7 @@ async def lotto_page(
         context={
             "user": current_user,
             "result": displayed_result,
+            "first_game_str": first_game_input,
             "is_paid": is_paid_user,
             "service_title": service_title
         }
