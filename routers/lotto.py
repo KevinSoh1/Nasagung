@@ -9,11 +9,9 @@ from database import get_db, get_current_user
 from config import OPENAI_API_KEY
 from openai import OpenAI
 
-# 로거 및 클라이언트 독립 설정 (순환 참조 방지)
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# 템플릿 경로 설정
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(CURRENT_DIR)
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -21,32 +19,27 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter()
 
-# ==========================================
-# 로또 페이지 (GET / POST)
-# ==========================================
 @router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
 async def lotto_page(
     request: Request,
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # 1. DB에서 현재 로그인한 유저 정보 조회
     current_user = None
-    is_paid_user = False  # 결제 여부 플래그
+    is_paid_user = False
 
     if user_email:
         try:
             current_user = get_current_user(user_email, db)
-            # 💡 [핵심] DB의 유저 테이블 구조에 맞춰 결제 여부를 확인하세요.
-            # 예: current_user가 딕셔너리 또는 객체일 때 결제 컬럼 검사 (is_paid, payment_status 등)
             if current_user:
-                # dict 형태인 경우: current_user.get("is_paid")
-                # ORM 객체인 경우: getattr(current_user, "is_paid", False)
-                is_paid_user = bool(current_user.get("is_paid", False) if isinstance(current_user, dict) else getattr(current_user, "is_paid", False))
+                # dict 객체와 ORM 객체 모두 대응 가능한 처리
+                if isinstance(current_user, dict):
+                    is_paid_user = bool(current_user.get("is_paid", False))
+                else:
+                    is_paid_user = bool(getattr(current_user, "is_paid", False))
         except Exception as e:
             logger.warning(f"유저 정보 조회 중 오류: {e}")
 
-    # 2. GET 요청 (화면 직접 접속)
     if request.method == "GET":
         return templates.TemplateResponse(
             request=request,
@@ -59,8 +52,6 @@ async def lotto_page(
             }
         )
 
-    # 3. POST 요청 (AI 번호 생성)
-    lotto_result = None
     displayed_result = None
 
     try:
@@ -98,18 +89,15 @@ async def lotto_page(
         )
         full_lotto_result = response.choices[0].message.content.strip()
 
-        # 💡 [핵심] 결제 여부에 따른 결과 제어
+        # 결제 여부에 따른 번호 제공 수 제어
         if is_paid_user:
-            # 결제 완료: 5개 게임 전체 출력
             displayed_result = full_lotto_result
         else:
-            # 미결제: 첫 번째 게임(첫 줄)만 잘라서 전달
             lines = full_lotto_result.split("\n")
             displayed_result = lines[0] if lines else full_lotto_result
 
     except Exception as e:
         logger.error(f"Lotto prediction error: {str(e)}")
-        print(f"================ [LOTTO ERROR]: {e} ================")
         displayed_result = f"AI 번호 생성 중 오류가 발생했습니다: {str(e)}"
 
     return templates.TemplateResponse(
@@ -117,8 +105,18 @@ async def lotto_page(
         name="lotto.html",
         context={
             "user": current_user,
-            "result": displayed_result,  # 결제 여부에 따라 필터링된 결과
-            "is_paid": is_paid_user,     # HTML에서 결제 버튼 분기용
+            "result": displayed_result,
+            "is_paid": is_paid_user,
             "service_title": service_title
         }
     )
+
+# 예시: /pay_popup 라우트 처리 함수 내부
+@router.post("/pay_popup")
+async def process_payment(request: Request, db=Depends(get_db), user_email: Optional[str] = Cookie(None)):
+    user = get_current_user(user_email, db)
+    if user.point >= 500:
+        user.point -= 500
+        user.is_paid = True  # <--- 결제 상태를 True로 변경
+        db.commit()          # <--- DB 반영 저장
+        return templates.TemplateResponse("pay_popup.html", {"request": request, "pay_success": True})
