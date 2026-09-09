@@ -24,29 +24,30 @@ router = APIRouter()
 # ==========================================
 # 로또 페이지 (GET / POST)
 # ==========================================
+# lotto.py (관련 부분 확인 및 보완)
+
 @router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
 async def lotto_page(
     request: Request,
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # 1. DB에서 현재 로그인한 유저 정보 조회
     current_user = None
-    is_paid_user = False  # 결제 여부 플래그
+    is_paid_user = False
 
     if user_email:
         try:
+            # 💡 매 요청 시 DB에서 유저의 최신 상태(포인트 차감 여부 / 결제 여부)를 조회합니다.
             current_user = get_current_user(user_email, db)
-            # 💡 [핵심] DB의 유저 테이블 구조에 맞춰 결제 여부를 확인하세요.
-            # 예: current_user가 딕셔너리 또는 객체일 때 결제 컬럼 검사 (is_paid, payment_status 등)
             if current_user:
-                # dict 형태인 경우: current_user.get("is_paid")
-                # ORM 객체인 경우: getattr(current_user, "is_paid", False)
-                is_paid_user = bool(current_user.get("is_paid", False) if isinstance(current_user, dict) else getattr(current_user, "is_paid", False))
+                is_paid_user = bool(
+                    current_user.get("is_paid", False) 
+                    if isinstance(current_user, dict) 
+                    else getattr(current_user, "is_paid", False)
+                )
         except Exception as e:
             logger.warning(f"유저 정보 조회 중 오류: {e}")
 
-    # 2. GET 요청 (화면 직접 접속)
     if request.method == "GET":
         return templates.TemplateResponse(
             request=request,
@@ -59,7 +60,7 @@ async def lotto_page(
             }
         )
 
-    # 3. POST 요청 (AI 번호 생성)
+    # POST 요청 시 (결제 상태에 따라 1게임 vs 5게임 분기)
     lotto_result = None
     displayed_result = None
 
@@ -98,18 +99,15 @@ async def lotto_page(
         )
         full_lotto_result = response.choices[0].message.content.strip()
 
-        # 💡 [핵심] 결제 여부에 따른 결과 제어
+        # 💡 결제 유무에 따라 필터링
         if is_paid_user:
-            # 결제 완료: 5개 게임 전체 출력
-            displayed_result = full_lotto_result
+            displayed_result = full_lotto_result  # 5게임 모두 반환
         else:
-            # 미결제: 첫 번째 게임(첫 줄)만 잘라서 전달
             lines = full_lotto_result.split("\n")
-            displayed_result = lines[0] if lines else full_lotto_result
+            displayed_result = lines[0] if lines else full_lotto_result  # 1게임만 반환
 
     except Exception as e:
         logger.error(f"Lotto prediction error: {str(e)}")
-        print(f"================ [LOTTO ERROR]: {e} ================")
         displayed_result = f"AI 번호 생성 중 오류가 발생했습니다: {str(e)}"
 
     return templates.TemplateResponse(
@@ -117,8 +115,8 @@ async def lotto_page(
         name="lotto.html",
         context={
             "user": current_user,
-            "result": displayed_result,  # 결제 여부에 따라 필터링된 결과
-            "is_paid": is_paid_user,     # HTML에서 결제 버튼 분기용
+            "result": displayed_result,
+            "is_paid": is_paid_user,
             "service_title": service_title
         }
     )
