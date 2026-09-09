@@ -19,6 +19,9 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter()
 
+# ==========================================
+# 1. 로또 번호 예측 페이지 (/lotto)
+# ==========================================
 @router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
 async def lotto_page(
     request: Request,
@@ -32,7 +35,6 @@ async def lotto_page(
         try:
             current_user = get_current_user(user_email, db)
             if current_user:
-                # dict 객체와 ORM 객체 모두 대응 가능한 처리
                 if isinstance(current_user, dict):
                     is_paid_user = bool(current_user.get("is_paid", False))
                 else:
@@ -111,25 +113,72 @@ async def lotto_page(
         }
     )
 
-# 예시: /pay_popup 라우트 처리 함수 내부
-@router.post("/pay_popup")
-async def process_payment(request: Request, db=Depends(get_db), user_email: Optional[str] = Cookie(None)):
-   # 1. 포인트 값 안전하게 꺼내기 (없으면 기본값 0)
-user_point = user.get("point", 0) if isinstance(user, dict) else getattr(user, "point", 0)
+# ==========================================
+# 2. 결제 팝업창 (/pay_popup - GET / POST)
+# ==========================================
+@router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
+async def process_payment(
+    request: Request,
+    db=Depends(get_db),
+    user_email: Optional[str] = Cookie(None)
+):
+    current_user = None
+    if user_email:
+        try:
+            current_user = get_current_user(user_email, db)
+        except Exception as e:
+            logger.warning(f"유저 조회 실패: {e}")
 
-# 2. 포인트 비교 및 처리
-if user_point >= 500:
-    if isinstance(user, dict):
-        # user가 dict 형태인 경우
-        user["point"] = user_point - 500
-        user["is_paid"] = True
-        
-        # ※ 만약 DB 업데이트를 SQL Query로 따로 날려줘야 하는 구조라면 아래 예시처럼 실행
-        # db.execute("UPDATE users SET point = :p, is_paid = :p_flag WHERE email = :email", 
-        #            {"p": user["point"], "p_flag": True, "email": user.get("email")})
-        # db.commit()
+    PRICE = 500
+    msg = None
+    pay_success = False
+
+    # 1. current_point 유저 보유 포인트 파악
+    if isinstance(current_user, dict):
+        user_point = current_user.get("current_point", 0)
     else:
-        # user가 ORM 객체인 경우
-        user.point -= 500
-        user.is_paid = True
-        db.commit()
+        user_point = getattr(current_user, "current_point", 0) if current_user else 0
+
+    # 2. POST 요청 (결제하기 버튼 클릭)
+    if request.method == "POST":
+        if not current_user:
+            msg = "로그인이 필요한 서비스입니다."
+        elif user_point < PRICE:
+            msg = "포인트가 부족합니다."
+        else:
+            try:
+                if isinstance(current_user, dict):
+                    # nasagung_user 테이블 UPDATE 실행
+                    sql = """
+                        UPDATE nasagung_user 
+                        SET current_point = current_point - :price, 
+                            is_paid = 1 
+                        WHERE email = :email
+                    """
+                    db.execute(sql, {"price": PRICE, "email": user_email})
+                    db.commit()
+                    user_point -= PRICE
+                else:
+                    current_user.current_point -= PRICE
+                    current_user.is_paid = True
+                    db.commit()
+                    user_point = current_user.current_point
+
+                pay_success = True
+
+            except Exception as e:
+                db.rollback()
+                logger.error(f"결제 DB 처리 중 오류 발생: {e}")
+                msg = "결제 처리 중 오류가 발생했습니다."
+
+    # 3. 템플릿 반환 (GET / POST 공통)
+    return templates.TemplateResponse(
+        request=request,
+        name="pay_popup.html",
+        context={
+            "price": PRICE,
+            "user_point": user_point,
+            "pay_success": pay_success,
+            "msg": msg
+        }
+    )
