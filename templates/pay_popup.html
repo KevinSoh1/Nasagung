@@ -23,16 +23,35 @@
             <h5 class="fw-bold text-success mb-3">결제가 완료되었습니다!</h5>
             <p class="small">분석 페이지에서 번호 조합 출력을 순차적으로 진행합니다.</p>
         </div>
-       <script>
-        // 1. 결제 완료 후 부모 창(lotto.html / TopMenu) 자동 새로고침
-            if (window.opener && !window.opener.closed) {
-                window.opener.location.reload();
+<script>
+    function onPaymentSuccess() {
+        // 1. 나를 열어준 부모 창(lotto.html)으로 결제 완료 메시지 전송
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({ status: "PAYMENT_COMPLETE" }, "*");
+        }
+        // 2. 결제 팝업창 자동 닫기
+        window.close();
+    }
+
+    // 예: 결제/포인트 차감 버튼 클릭 시 또는 AJAX/Form 응답 성공 후 실행
+    async function handlePayment() {
+        try {
+            // 포인트 삭감 백엔드 API 호출 예시
+            const response = await fetch('/api/pay_deduct_points', { method: 'POST' });
+            const result = await response.json();
+        
+            if (result.success) {
+                alert("결제 및 포인트 삭감이 완료되었습니다.");
+                onPaymentSuccess(); // 팝업 닫기 및 부모창 갱신
+            } else {
+                alert("포인트가 부족하거나 결제에 실패했습니다.");
             }
-        // 2. 1초 뒤 팝업창 스스로 닫기
-            setTimeout(function() {
-                window.close();
-            }, 1000);
-       </script>
+    } catch (e) {
+        console.error(e);
+        alert("결제 처리 중 오류가 발생했습니다.");
+    }
+}
+</script>
     {% else %}
         <div class="pay-box">
             <div class="d-flex justify-content-between mb-2">
