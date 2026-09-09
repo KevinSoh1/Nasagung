@@ -114,9 +114,22 @@ async def lotto_page(
 # 예시: /pay_popup 라우트 처리 함수 내부
 @router.post("/pay_popup")
 async def process_payment(request: Request, db=Depends(get_db), user_email: Optional[str] = Cookie(None)):
-    user = get_current_user(user_email, db)
-    if user.point >= 500:
+   # 1. 포인트 값 안전하게 꺼내기 (없으면 기본값 0)
+user_point = user.get("point", 0) if isinstance(user, dict) else getattr(user, "point", 0)
+
+# 2. 포인트 비교 및 처리
+if user_point >= 500:
+    if isinstance(user, dict):
+        # user가 dict 형태인 경우
+        user["point"] = user_point - 500
+        user["is_paid"] = True
+        
+        # ※ 만약 DB 업데이트를 SQL Query로 따로 날려줘야 하는 구조라면 아래 예시처럼 실행
+        # db.execute("UPDATE users SET point = :p, is_paid = :p_flag WHERE email = :email", 
+        #            {"p": user["point"], "p_flag": True, "email": user.get("email")})
+        # db.commit()
+    else:
+        # user가 ORM 객체인 경우
         user.point -= 500
-        user.is_paid = True  # <--- 결제 상태를 True로 변경
-        db.commit()          # <--- DB 반영 저장
-        return templates.TemplateResponse("pay_popup.html", {"request": request, "pay_success": True})
+        user.is_paid = True
+        db.commit()
