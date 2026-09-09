@@ -1,14 +1,15 @@
 import os
 import logging
 from typing import Optional
-from fastapi import APIRouter, Request, Cookie, Depends, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request, Cookie, Depends
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from database import get_db, get_current_user
 from config import OPENAI_API_KEY
 from openai import OpenAI
 
+# 로거 및 클라이언트 독립 설정 (순환 참조 방지)
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -20,86 +21,104 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter()
 
-LOTTO_PRICE = 500  # 로또 5게임 열람 결제 포인트
-
 # ==========================================
 # 로또 페이지 (GET / POST)
 # ==========================================
-# ==========================================
-# 결제 팝업 페이지 (GET / POST)
-# ==========================================
-@router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
-async def pay_popup(
+@router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
+async def lotto_page(
     request: Request,
     user_email: Optional[str] = Cookie(None),
     db=Depends(get_db)
 ):
-    # 1. 쿠키 확인 및 디버깅 로그
-    logger.info(f"[PAY_POPUP] 요청 Method: {request.method}, Cookie Email: {user_email}")
+    # 1. DB에서 현재 로그인한 유저 정보 조회
+    current_user = None
+    is_paid_user = False  # 결제 여부 플래그
 
-    if not user_email:
-        return HTMLResponse("로그인이 필요합니다. (쿠키 정보 없음)", status_code=401)
+    if user_email:
+        try:
+            current_user = get_current_user(user_email, db)
+            # 💡 [핵심] DB의 유저 테이블 구조에 맞춰 결제 여부를 확인하세요.
+            # 예: current_user가 딕셔너리 또는 객체일 때 결제 컬럼 검사 (is_paid, payment_status 등)
+            if current_user:
+                # dict 형태인 경우: current_user.get("is_paid")
+                # ORM 객체인 경우: getattr(current_user, "is_paid", False)
+                is_paid_user = bool(current_user.get("is_paid", False) if isinstance(current_user, dict) else getattr(current_user, "is_paid", False))
+        except Exception as e:
+            logger.warning(f"유저 정보 조회 중 오류: {e}")
 
-    # 2. 유저 정보 조회
-    current_user = get_current_user(user_email, db)
-    if not current_user:
-        logger.error(f"[PAY_POPUP] 유저 조회 실패: {user_email}")
-        return HTMLResponse("유저 정보를 찾을 수 없습니다.", status_code=404)
+    # 2. GET 요청 (화면 직접 접속)
+    if request.method == "GET":
+        return templates.TemplateResponse(
+            request=request,
+            name="lotto.html",
+            context={
+                "user": current_user,
+                "result": None,
+                "is_paid": is_paid_user,
+                "service_title": "로또 번호 예측"
+            }
+        )
 
-    # 3. 객체 타입(Dict vs ORM Class)에 구애받지 않고 안전하게 포인트 및 결제상태 추출
-    def get_user_attr(user_obj, attr_name, default_value):
-        if isinstance(user_obj, dict):
-            return user_obj.get(attr_name, default_value)
-        return getattr(user_obj, attr_name, default_value)
+    # 3. POST 요청 (AI 번호 생성)
+    lotto_result = None
+    displayed_result = None
 
-    def set_user_attr(user_obj, attr_name, value):
-        if isinstance(user_obj, dict):
-            user_obj[attr_name] = value
+    try:
+        form_data = await request.form()
+        name = form_data.get("name", "")
+        birthYear = form_data.get("birthYear", "")
+        birthDay = form_data.get("birthDay", "")
+        birthTime = form_data.get("birthTime", "")
+        gender = form_data.get("gender", "")
+        calendarType = form_data.get("calendarType", "")
+        fiveElements = form_data.get("fiveElements", "")
+
+        birthdate = f"{birthYear}-{birthDay}"
+        service_title = "로또 번호 예측"
+        system_role = "당신은 타고난 사주 오행과 천기의 흐름을 바탕으로 행운의 숫자를 산출하는 전문 숫자 분석가입니다."
+        
+        prompt_content = (
+            "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표', '줄바꿈' 기호만 사용하여 답변을 작성하세요. "
+            "절대로 인사말, 사주 풀이 설명, 마크다운(###, **, -) 등의 일반 텍스트를 포함해서는 안 됩니다.\n\n"
+            f"[사용자 정보]\n- 이름: {name}\n- 성별: {gender}\n- 생년월일: {birthdate} ({calendarType})\n- 출생시간: {birthTime}\n- 집중오행기운: {fiveElements}\n\n"
+            "[출력 형식 및 제한 요구사항]\n1. 사용자의 사주 음양오행과 집중 기운을 참고하여 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
+            "2. 총 5줄(5게임, 총 30개 숫자)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
+            "3. 각 줄의 숫자는 쉼표(,)로만 구분되어야 합니다.\n"
+            "4. ★중요: 각 줄의 숫자 6개는 절대로 작은 수부터 정렬(1, 2, 3...)하지 말고, 무작위로 추출된 천기의 순서 그대로 뒤섞어 출력해야 합니다.\n\n"
+            "[올바른 출력 예시]\n42,7,19,3,32,11\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
+        )
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_role},
+                {"role": "user", "content": prompt_content}
+            ],
+            temperature=0.8
+        )
+        full_lotto_result = response.choices[0].message.content.strip()
+
+        # 💡 [핵심] 결제 여부에 따른 결과 제어
+        if is_paid_user:
+            # 결제 완료: 5개 게임 전체 출력
+            displayed_result = full_lotto_result
         else:
-            setattr(user_obj, attr_name, value)
+            # 미결제: 첫 번째 게임(첫 줄)만 잘라서 전달
+            lines = full_lotto_result.split("\n")
+            displayed_result = lines[0] if lines else full_lotto_result
 
-    user_point = int(get_user_attr(current_user, "point", 0) or 0)
-    logger.info(f"[PAY_POPUP] 현재 조회된 유저 포인트: {user_point} P (필요: {LOTTO_PRICE} P)")
-
-    pay_success = False
-    msg = None
-
-    # 4. 결제(POST) 처리
-    if request.method == "POST":
-        if user_point < LOTTO_PRICE:
-            msg = f"포인트가 부족합니다. (보유: {user_point}P / 필요: {LOTTO_PRICE}P)"
-            logger.warning(f"[PAY_POPUP] 결제 실패 - {msg}")
-        else:
-            try:
-                new_point = user_point - LOTTO_PRICE
-                
-                # DB / 객체에 차감된 포인트 및 결제 상태 반영
-                set_user_attr(current_user, "point", new_point)
-                set_user_attr(current_user, "is_paid", True)
-
-                # SQLAlchemy ORM을 사용 중일 경우 DB 커밋 수행
-                if hasattr(db, "commit"):
-                    db.commit()
-                    if hasattr(db, "refresh"):
-                        db.refresh(current_user)
-
-                user_point = new_point
-                pay_success = True
-                logger.info(f"[PAY_POPUP] 결제 성공! 차감 후 잔여 포인트: {user_point} P")
-
-            except Exception as e:
-                logger.error(f"[PAY_POPUP] DB 저장 중 오류 발생: {str(e)}")
-                if hasattr(db, "rollback"):
-                    db.rollback()
-                msg = "결제 처리(DB 저장) 중 오류가 발생했습니다."
+    except Exception as e:
+        logger.error(f"Lotto prediction error: {str(e)}")
+        print(f"================ [LOTTO ERROR]: {e} ================")
+        displayed_result = f"AI 번호 생성 중 오류가 발생했습니다: {str(e)}"
 
     return templates.TemplateResponse(
         request=request,
-        name="pay_popup.html",
+        name="lotto.html",
         context={
-            "price": LOTTO_PRICE,
-            "user_point": user_point,
-            "pay_success": pay_success,
-            "msg": msg
+            "user": current_user,
+            "result": displayed_result,  # 결제 여부에 따라 필터링된 결과
+            "is_paid": is_paid_user,     # HTML에서 결제 버튼 분기용
+            "service_title": service_title
         }
     )
