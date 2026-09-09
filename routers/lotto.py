@@ -117,8 +117,6 @@ async def lotto_page(
 # ==========================================
 # 2. 결제 팝업창 (/pay_popup - GET / POST)
 # ==========================================
-from sqlalchemy import text  # 최상단 import 항목에 추가 필요
-
 @router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
 async def process_payment(
     request: Request,
@@ -136,13 +134,12 @@ async def process_payment(
     msg = None
     pay_success = False
 
-    # 1. 보유 포인트 파악
+    # 보유 포인트 가져오기
     if isinstance(current_user, dict):
         user_point = current_user.get("current_point", 0)
     else:
         user_point = getattr(current_user, "current_point", 0) if current_user else 0
 
-    # 2. POST 요청 처리
     if request.method == "POST":
         if not user_email or not current_user:
             msg = "로그인이 필요한 서비스입니다."
@@ -150,29 +147,30 @@ async def process_payment(
             msg = "포인트가 부족합니다."
         else:
             try:
-                if isinstance(current_user, dict):
-                    # text() 객체를 활용한 안전한 UPDATE
-                    update_sql = text("""
-                        UPDATE nasagung_user 
-                        SET current_point = current_point - :price, 
-                            is_paid = 1 
-                        WHERE email = :email
-                    """)
-                    db.execute(update_sql, {"price": PRICE, "email": user_email})
+                # Connection 객체인 경우 cursor를 생성해서 execute 호출
+                if hasattr(db, "cursor"):
+                    with db.cursor() as cursor:
+                        sql = """
+                            UPDATE nasagung_user 
+                            SET current_point = current_point - %s, 
+                                is_paid = 1 
+                            WHERE email = %s
+                        """
+                        cursor.execute(sql, (PRICE, user_email))
                     db.commit()
-                    user_point -= PRICE
                 else:
-                    # ORM 객체인 경우
+                    # SQLAlchemy ORM 객체인 경우
                     current_user.current_point -= PRICE
                     current_user.is_paid = True
                     db.commit()
-                    user_point = current_user.current_point
 
+                user_point -= PRICE
                 pay_success = True
 
             except Exception as e:
-                db.rollback()  # 오류 발생 시 DB 트랜잭션 롤백
-                logger.error(f"결제 DB 처리 중 오류 발생: {e}", exc_info=True)  # 상세 스택트레이스 출력
+                if hasattr(db, "rollback"):
+                    db.rollback()
+                logger.error(f"결제 DB 처리 중 오류 발생: {e}", exc_info=True)
                 msg = f"결제 처리 중 오류가 발생했습니다: {str(e)}"
 
     return templates.TemplateResponse(
