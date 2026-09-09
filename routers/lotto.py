@@ -1,15 +1,14 @@
 import os
 import logging
 from typing import Optional
-from fastapi import APIRouter, Request, Cookie, Depends
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Cookie, Depends, Form
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from database import get_db, get_current_user
 from config import OPENAI_API_KEY
 from openai import OpenAI
 
-# 로거 및 클라이언트 독립 설정 (순환 참조 방지)
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -21,11 +20,12 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter()
 
+LOTTO_PRICE = 500  # 로또 5게임 열람 결제 포인트
+
+
 # ==========================================
 # 로또 페이지 (GET / POST)
 # ==========================================
-# lotto.py (관련 부분 확인 및 보완)
-
 @router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
 async def lotto_page(
     request: Request,
@@ -37,7 +37,6 @@ async def lotto_page(
 
     if user_email:
         try:
-            # 💡 매 요청 시 DB에서 유저의 최신 상태(포인트 차감 여부 / 결제 여부)를 조회합니다.
             current_user = get_current_user(user_email, db)
             if current_user:
                 is_paid_user = bool(
@@ -60,8 +59,7 @@ async def lotto_page(
             }
         )
 
-    # POST 요청 시 (결제 상태에 따라 1게임 vs 5게임 분기)
-    lotto_result = None
+    # POST 요청 시 (로또 번호 추출)
     displayed_result = None
 
     try:
@@ -99,16 +97,17 @@ async def lotto_page(
         )
         full_lotto_result = response.choices[0].message.content.strip()
 
-        # 💡 결제 유무에 따라 필터링
+        # 줄바꿈 정제 및 결제 상태별 필터링
+        lines = [line.strip() for line in full_lotto_result.split("\n") if line.strip()]
+        
         if is_paid_user:
-            displayed_result = full_lotto_result  # 5게임 모두 반환
+            displayed_result = "\n".join(lines[:5])  # 5게임 전체 반환
         else:
-            lines = full_lotto_result.split("\n")
-            displayed_result = lines[0] if lines else full_lotto_result  # 1게임만 반환
+            displayed_result = lines[0] if lines else ""  # 미결제 시 1게임만 반환
 
     except Exception as e:
         logger.error(f"Lotto prediction error: {str(e)}")
-        displayed_result = f"AI 번호 생성 중 오류가 발생했습니다: {str(e)}"
+        displayed_result = "AI 번호 생성 중 오류가 발생했습니다."
 
     return templates.TemplateResponse(
         request=request,
@@ -118,5 +117,58 @@ async def lotto_page(
             "result": displayed_result,
             "is_paid": is_paid_user,
             "service_title": service_title
+        }
+    )
+
+
+# ==========================================
+# 결제 팝업 페이지 (GET / POST)
+# ==========================================
+@router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
+async def pay_popup(
+    request: Request,
+    user_email: Optional[str] = Cookie(None),
+    db=Depends(get_db)
+):
+    if not user_email:
+        return HTMLResponse("로그인이 필요합니다.", status_code=401)
+
+    current_user = get_current_user(user_email, db)
+    if not current_user:
+        return HTMLResponse("유저 정보를 찾을 수 없습니다.", status_code=404)
+
+    user_point = current_user.get("point", 0) if isinstance(current_user, dict) else getattr(current_user, "point", 0)
+    pay_success = False
+    msg = None
+
+    if request.method == "POST":
+        if user_point < LOTTO_PRICE:
+            msg = "포인트가 부족합니다."
+        else:
+            try:
+                # 💡 DB 포인트 차감 및 결제 상태 갱신 (사용하시는 DB ORM/조작 방식에 맞게 조정)
+                if isinstance(current_user, dict):
+                    current_user["point"] -= LOTTO_PRICE
+                    current_user["is_paid"] = True
+                else:
+                    current_user.point -= LOTTO_PRICE
+                    current_user.is_paid = True
+                    if hasattr(db, "commit"):
+                        db.commit()
+
+                user_point -= LOTTO_PRICE
+                pay_success = True
+            except Exception as e:
+                logger.error(f"포인트 차감 실패: {e}")
+                msg = "결제 처리 중 오류가 발생했습니다."
+
+    return templates.TemplateResponse(
+        request=request,
+        name="pay_popup.html",
+        context={
+            "price": LOTTO_PRICE,
+            "user_point": user_point,
+            "pay_success": pay_success,
+            "msg": msg
         }
     )
