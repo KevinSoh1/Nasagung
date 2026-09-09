@@ -151,7 +151,7 @@ async def process_payment(
                 if hasattr(db, "cursor"):
                     with db.cursor() as cursor:
                         sql = """
-                            UPDATE nasagung_user 
+                            UPDATE nasagung_users 
                             SET current_point = current_point - %s, 
                                 is_paid = 1 
                             WHERE email = %s
