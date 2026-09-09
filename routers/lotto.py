@@ -21,7 +21,43 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 router = APIRouter()
 
 # ==========================================
-# 1. 로또 번호 예측 페이지 (/lotto)
+# 헬퍼 함수: point_history 결제 여부 확인
+# ==========================================
+def check_lotto_payment(user_email: str, db) -> bool:
+    """point_history 테이블에서 로또 번호 결제 내역(LOTTO_PAY) 유무 확인"""
+    if not user_email:
+        return False
+    
+    try:
+        if hasattr(db, "cursor"): # Raw PyMySQL / MySQLdb Cursor
+            with db.cursor() as cursor:
+                sql = """
+                    SELECT COUNT(*) as count 
+                    FROM point_history 
+                    WHERE email = %s AND type = 'LOTTO_PAY' AND target_id = 'lotto'
+                """
+                cursor.execute(sql, (user_email,))
+                row = cursor.fetchone()
+                if isinstance(row, dict):
+                    return row.get("count", 0) > 0
+                elif row:
+                    return row[0] > 0
+        else: # SQLAlchemy Engine / Session
+            query = text("""
+                SELECT COUNT(*) 
+                FROM point_history 
+                WHERE email = :email AND type = 'LOTTO_PAY' AND target_id = 'lotto'
+            """)
+            result = db.execute(query, {"email": user_email}).scalar()
+            return bool(result and result > 0)
+    except Exception as e:
+        logger.error(f"결제 확인 조회 실패: {e}")
+        return False
+    return False
+
+
+# ==========================================
+# 1. 로또 페이지 (/lotto)
 # ==========================================
 @router.api_route("/lotto", methods=["GET", "POST"], response_class=HTMLResponse)
 async def lotto_page(
@@ -35,13 +71,10 @@ async def lotto_page(
     if user_email:
         try:
             current_user = get_current_user(user_email, db)
-            if current_user:
-                if isinstance(current_user, dict):
-                    is_paid_user = bool(current_user.get("is_paid", False))
-                else:
-                    is_paid_user = bool(getattr(current_user, "is_paid", False))
+            # point_history 내역 검사하여 결제 여부 결정
+            is_paid_user = check_lotto_payment(user_email, db)
         except Exception as e:
-            logger.warning(f"유저 정보 조회 중 오류: {e}")
+            logger.warning(f"유저 정보 조회 중 예외: {e}")
 
     if request.method == "GET":
         return templates.TemplateResponse(
@@ -73,13 +106,13 @@ async def lotto_page(
         
         prompt_content = (
             "아래 사용자 정보를 분석하여 오직 '숫자'와 '쉼표', '줄바꿈' 기호만 사용하여 답변을 작성하세요. "
-            "절대로 인사말, 사주 풀이 설명, 마크다운(###, **, -) 등의 일반 텍스트를 포함해서는 안 됩니다.\n\n"
+            "절대로 인사말, 설명글, 마크다운 기호를 포함해선 안 됩니다.\n\n"
             f"[사용자 정보]\n- 이름: {name}\n- 성별: {gender}\n- 생년월일: {birthdate} ({calendarType})\n- 출생시간: {birthTime}\n- 집중오행기운: {fiveElements}\n\n"
-            "[출력 형식 및 제한 요구사항]\n1. 사용자의 사주 음양오행과 집중 기운을 참고하여 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
-            "2. 총 5줄(5게임, 총 30개 숫자)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
-            "3. 각 줄의 숫자는 쉼표(,)로만 구분되어야 합니다.\n"
-            "4. ★중요: 각 줄의 숫자 6개는 절대로 작은 수부터 정렬(1, 2, 3...)하지 말고, 무작위로 추출된 천기의 순서 그대로 뒤섞어 출력해야 합니다.\n\n"
-            "[올바른 출력 예시]\n42,7,19,3,32,11\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
+            "[요구사항]\n1. 1부터 45 사이의 무작위 로또 번호 6개를 한 줄에 출력하세요.\n"
+            "2. 총 5줄(5게임)을 엔터(줄바꿈)로 구분하여 출력하세요.\n"
+            "3. 각 줄의 숫자는 쉼표(,)로 구분하세요.\n"
+            "4. ★중요: 번호 순서 정렬 없이 무작위 추출 순서 그대로 뒤섞어 출력하세요.\n\n"
+            "[출력 예시]\n42,7,19,3,32,11\n14,28,5,44,22,1\n33,9,18,25,41,12\n2,21,39,17,30,8\n45,13,6,24,35,16"
         )
 
         response = client.chat.completions.create(
@@ -92,11 +125,11 @@ async def lotto_page(
         )
         full_lotto_result = response.choices[0].message.content.strip()
 
-        # 결제 여부에 따른 번호 제공 수 제어
+        # 결제 성공 고객 -> 5게임 전체 반환 / 미결제 고객 -> 1게임만 반환
         if is_paid_user:
             displayed_result = full_lotto_result
         else:
-            lines = full_lotto_result.split("\n")
+            lines = [line.strip() for line in full_lotto_result.split("\n") if line.strip()]
             displayed_result = lines[0] if lines else full_lotto_result
 
     except Exception as e:
@@ -115,7 +148,7 @@ async def lotto_page(
     )
 
 # ==========================================
-# 2. 결제 팝업창 (/pay_popup - GET / POST)
+# 2. 결제 팝업창 (/pay_popup)
 # ==========================================
 @router.api_route("/pay_popup", methods=["GET", "POST"], response_class=HTMLResponse)
 async def process_payment(
@@ -146,25 +179,31 @@ async def process_payment(
             msg = "포인트가 부족합니다."
         else:
             try:
-                # Raw Cursor 연결 환경 처리
+                # Raw Cursor 처리
                 if hasattr(db, "cursor"):
                     with db.cursor() as cursor:
-                        sql = """
-                            UPDATE nasagung_users 
-                            SET current_point = current_point - %s, 
-                                is_paid = 1 
-                            WHERE email = %s
+                        # 1) nasagung_users 포인트 차감
+                        sql_user = "UPDATE nasagung_users SET current_point = current_point - %s WHERE email = %s"
+                        cursor.execute(sql_user, (PRICE, user_email))
+
+                        # 2) point_history 내역 기록
+                        sql_history = """
+                            INSERT INTO point_history (email, type, amount, description, target_id)
+                            VALUES (%s, 'LOTTO_PAY', %s, '로또 5게임 조합 열람', 'lotto')
                         """
-                        cursor.execute(sql, (PRICE, user_email))
+                        cursor.execute(sql_history, (user_email, -PRICE))
                     db.commit()
-                # SQLAlchemy ORM 또는 Session 처리
+
+                # SQLAlchemy 처리
                 else:
-                    if hasattr(db, "execute") and not hasattr(current_user, "current_point"):
-                        query = text("UPDATE nasagung_users SET current_point = current_point - :price, is_paid = 1 WHERE email = :email")
-                        db.execute(query, {"price": PRICE, "email": user_email})
-                    else:
-                        current_user.current_point -= PRICE
-                        current_user.is_paid = True
+                    sql_user = text("UPDATE nasagung_users SET current_point = current_point - :price WHERE email = :email")
+                    db.execute(sql_user, {"price": PRICE, "email": user_email})
+
+                    sql_history = text("""
+                        INSERT INTO point_history (email, type, amount, description, target_id)
+                        VALUES (:email, 'LOTTO_PAY', :amount, '로또 5게임 조합 열람', 'lotto')
+                    """)
+                    db.execute(sql_history, {"email": user_email, "amount": -PRICE})
                     db.commit()
 
                 user_point -= PRICE
@@ -173,8 +212,8 @@ async def process_payment(
             except Exception as e:
                 if hasattr(db, "rollback"):
                     db.rollback()
-                logger.error(f"결제 DB 처리 중 오류 발생: {e}", exc_info=True)
-                msg = f"결제 처리 중 오류가 발생했습니다: {str(e)}"
+                logger.error(f"포인트 결제 처리 중 오류 발생: {e}", exc_info=True)
+                msg = f"결제 처리 실패: {str(e)}"
 
     return templates.TemplateResponse(
         request=request,
