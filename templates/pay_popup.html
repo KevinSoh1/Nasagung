@@ -24,7 +24,7 @@
             <p class="small">분석 페이지에서 번호 조합 출력을 순차적으로 진행합니다.</p>
         </div>
         <script>
-            // 결제 성공 시 자동으로 부모 창에 알리고 팝업을 닫습니다.
+            // 결제 성공 시 부모 창에 알림 메시지를 전송하고 팝업을 닫습니다.
             (function() {
                 if (window.opener && !window.opener.closed) {
                     window.opener.postMessage({ status: "PAYMENT_COMPLETE" }, "*");
