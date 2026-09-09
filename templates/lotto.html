@@ -20,7 +20,6 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
 
         .hero {
@@ -84,8 +83,8 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group.full-width { grid-column: span 2; }
         .form-group label { font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #444; }
-        .form-group select, .form-group input, .form-group textarea { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: 0.3s; font-weight: 500; }
-        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { border-color: var(--accent-gold); outline: none; box-shadow: 0 0 0 3px rgba(207, 181, 59, 0.2); }
+        .form-group select, .form-group input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: 0.3s; font-weight: 500; }
+        .form-group select:focus, .form-group input:focus { border-color: var(--accent-gold); outline: none; box-shadow: 0 0 0 3px rgba(207, 181, 59, 0.2); }
 
         .saju-grid-custom { display: grid; grid-template-columns: 1.2fr 1.5fr 1.3fr; gap: 15px; grid-column: span 2; }
         .birth-date-group { display: flex; gap: 8px; }
@@ -243,11 +242,10 @@ const isPaid = {{ 'true' if is_paid else 'false' }};
 let globalGamesData = [];
 const serverResult = `{{ result if result else '' }}`;
 
-// 결제 팝업창에서 수신받는 메시지 이벤트 리스너
+// 결제 팝업창 완료 수신 이벤트
 window.addEventListener("message", function(event) {
     if (event.data && event.data.status === "PAYMENT_COMPLETE") {
-        alert("결제가 성공적으로 완료되었습니다! 5개 전체 추천 조합을 불러옵니다.");
-        
+        alert("결제가 완료되었습니다! 5개 번호 전체 추천 조합을 다시 로딩합니다.");
         const lottoForm = document.getElementById("lottoForm");
         if (lottoForm && lottoForm.checkValidity()) {
             lottoForm.submit();
@@ -293,32 +291,33 @@ function processLottoResult(aiText) {
 
     let currentDelay = 0;
 
-    if (isPaid) {
+    // 결제 내역이 확인된 경우: 5게임 전체 연출
+    if (isPaid && globalGamesData.length > 1) {
         for (let i = 0; i < globalGamesData.length; i++) {
             renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
-            currentDelay += 480; 
+            currentDelay += 400; 
         }
 
         setTimeout(function() {
             const noticeDiv = document.createElement('div');
             noticeDiv.className = 'lotto-notice-box notice-paid';
-            noticeDiv.innerHTML = '🎉 결제 완료! 천기누설 프리미엄 5개 조합이 모두 해제되었습니다.';
+            noticeDiv.innerHTML = '🎉 포인트 결제 완료! 천기누설 5개 조합이 모두 출력되었습니다.';
             container.appendChild(noticeDiv);
         }, currentDelay + 200);
 
     } else {
+        // 미결제 상태: 1게임만 연출 및 결제 유도 안내
         renderLottoGameRow(globalGamesData[0], 1, 0);
 
         setTimeout(function() {
             const noticeDiv = document.createElement('div');
-            noticeDiv.className = 'lotto-notice-box';
             
             if (!isMember) {
-                noticeDiv.className += ' notice-guest';
-                noticeDiv.innerHTML = '⚠️ 비회원은 맛보기용 1게임만 제공됩니다.<br>전체 5게임 조합 및 천기 분석 결과를 보시려면<br><a href="/register">회원가입</a>을 진행해 주세요.';
+                noticeDiv.className = 'lotto-notice-box notice-guest';
+                noticeDiv.innerHTML = '⚠️ 비회원은 1게임만 확인 가능합니다.<br>전체 5게임 번호 조합 및 천기 분석 결과를 보시려면 <a href="/register">회원가입</a> 후 이용해 주세요.';
             } else {
-                noticeDiv.className += ' notice-member';
-                noticeDiv.innerHTML = '🔒 회원은 기본 1게임이 무료 제공됩니다.<br>나머지 대박 추천 조합을 모두 열람하시려면<br><span onclick="openPaymentPopup()">[구매하기 (결제)]</span>를 완료해 주세요.';
+                noticeDiv.className = 'lotto-notice-box notice-member';
+                noticeDiv.innerHTML = '🔒 기본 1게임 추출이 완료되었습니다.<br>나머지 대박 추천 조합(총 5게임)을 모두 보시려면<br><span onclick="openPaymentPopup()">[구매하기 (결제)]</span>를 눌러주세요.';
             }
             container.appendChild(noticeDiv);
         }, 80 * 6 + 200);
@@ -338,7 +337,7 @@ function renderLottoGameRow(numbers, gameIndex, startDelay) {
 
     let ballDelay = startDelay;
     numbers.forEach(function(num) {
-        ballDelay += 80;
+        ballDelay += 70;
         setTimeout(function() {
             const ball = document.createElement('div');
             ball.className = 'lotto-ball-real';
