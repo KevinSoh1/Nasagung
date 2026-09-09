@@ -308,21 +308,21 @@ let globalGamesData = [];
 // 서버에서 전달된 로또 생성 결과 문자열 (POST 요청 후 전달받음)
 const serverResult = `{{ result if result else '' }}`;
 
-// 💡 [추가] 결제 팝업창(pay_popup)으로부터 완료 이벤트를 수신하는 리스너
+// 결제 팝업창(pay_popup)으로부터 완료 이벤트를 수신하는 리스너
 window.addEventListener("message", function(event) {
     if (event.data && event.data.status === "PAYMENT_COMPLETE") {
         alert("결제가 성공적으로 완료되었습니다! 5개 전체 추천 조합을 불러옵니다.");
         
-        // 결제 상태가 DB에 반영된 후 폼을 자동 재전송하여 5개 번호를 새로 받아옴
         const lottoForm = document.getElementById("lottoForm");
         if (lottoForm) {
+            // 입력 폼에 필수 데이터가 채워져 있다면 자동 제출
             lottoForm.submit();
         } else {
             window.location.reload();
         }
     }
-}, false);
-
+}, false);	
+	
 document.addEventListener("DOMContentLoaded", function() {
     if (serverResult && serverResult.trim() !== '') {
         processLottoResult(serverResult);
