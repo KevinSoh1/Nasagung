@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Cookie, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import text  # 최상단 import 항목에 추가 필요
+from sqlalchemy import text
 
 from database import get_db, get_current_user
 from config import OPENAI_API_KEY
@@ -134,7 +134,6 @@ async def process_payment(
     msg = None
     pay_success = False
 
-    # 보유 포인트 가져오기
     if isinstance(current_user, dict):
         user_point = current_user.get("current_point", 0)
     else:
@@ -147,7 +146,7 @@ async def process_payment(
             msg = "포인트가 부족합니다."
         else:
             try:
-                # Connection 객체인 경우 cursor를 생성해서 execute 호출
+                # Raw Cursor 연결 환경 처리
                 if hasattr(db, "cursor"):
                     with db.cursor() as cursor:
                         sql = """
@@ -158,10 +157,14 @@ async def process_payment(
                         """
                         cursor.execute(sql, (PRICE, user_email))
                     db.commit()
+                # SQLAlchemy ORM 또는 Session 처리
                 else:
-                    # SQLAlchemy ORM 객체인 경우
-                    current_user.current_point -= PRICE
-                    current_user.is_paid = True
+                    if hasattr(db, "execute") and not hasattr(current_user, "current_point"):
+                        query = text("UPDATE nasagung_users SET current_point = current_point - :price, is_paid = 1 WHERE email = :email")
+                        db.execute(query, {"price": PRICE, "email": user_email})
+                    else:
+                        current_user.current_point -= PRICE
+                        current_user.is_paid = True
                     db.commit()
 
                 user_point -= PRICE
