@@ -145,6 +145,7 @@
                 </div>
 
                 <form id="lottoForm" action="/lotto" method="POST">
+					<input type="hidden" id="firstGame" name="firstGame" value="{{ first_game_str if first_game_str else '' }}">
                     <div class="form-grid">
                         <div class="saju-grid-custom">
                             <div class="form-group">
@@ -288,10 +289,13 @@ function processLottoResult(aiText) {
         alert("유효한 로또 게임 번호가 생성되지 않았습니다.");
         return;
     }
-
+	// [중요] 최초 생성된 1게임 번호를 hidden input에 저장해 두어 결제 후 재요청 시 유지시킴
+    if (globalGamesData.length > 0) {
+        document.getElementById('firstGame').value = globalGamesData[0].join(',');
+    }
     let currentDelay = 0;
 
-    // 결제 내역이 확인된 경우: 5게임 전체 연출
+    // 결제 완료 상태: 기존 1게임 + 추가된 4게임 (총 5게임 전체 연출)
     if (isPaid && globalGamesData.length > 1) {
         for (let i = 0; i < globalGamesData.length; i++) {
             renderLottoGameRow(globalGamesData[i], i + 1, currentDelay);
@@ -301,10 +305,9 @@ function processLottoResult(aiText) {
         setTimeout(function() {
             const noticeDiv = document.createElement('div');
             noticeDiv.className = 'lotto-notice-box notice-paid';
-            noticeDiv.innerHTML = '🎉 포인트 결제 완료! 천기누설 5개 조합이 모두 출력되었습니다.';
+            noticeDiv.innerHTML = '🎉 포인트 결제 완료! 기존 번호(1게임) 유지 및 추가 4개 조합이 해제되었습니다.';
             container.appendChild(noticeDiv);
         }, currentDelay + 200);
-
     } else {
         // 미결제 상태: 1게임만 연출 및 결제 유도 안내
         renderLottoGameRow(globalGamesData[0], 1, 0);
