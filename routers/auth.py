@@ -213,7 +213,6 @@ async def logout():
     response.delete_cookie(key="user_email")
     return response
 
-
 # ==========================================
 # 4. 회원가입 페이지 화면 띄우기 (GET)
 # ==========================================
@@ -221,6 +220,17 @@ async def logout():
 async def register_page(request: Request):
     return templates.TemplateResponse(request, "register.html")
 
+# ==========================================
+# ID,Password 찾기 및 재설정하기.
+# ==========================================
+@router.get("/findAccount", response_class=HTMLResponse)
+async def get_find_account_page(request: Request):
+    return templates.TemplateResponse(
+        request=request, 
+        name="findAccount.html",
+        context={}
+    )
+    
 
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
