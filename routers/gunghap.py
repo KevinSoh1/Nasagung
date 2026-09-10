@@ -54,17 +54,27 @@ async def get_gunghap_page(
     )
 
 @router.get("/gunghapResult.html", response_class=HTMLResponse)
+@router.get("/gunghapResult", response_class=HTMLResponse)
 async def get_gunghap_result_page(
     request: Request, 
-    user_email: Optional[str] = Cookie(None)
+    user_email: Optional[str] = Cookie(None),
+    db: Session = Depends(get_db)  # 💡 DB 세션 주입 추가
 ):
-    is_logged_in = bool(user_email)
+    current_user = None
+    if user_email:
+        try:
+            # 💡 DB에서 실제 로그인한 사용자 정보 조회
+            current_user = get_current_user(user_email, db)
+        except Exception as e:
+            logger.warning(f"결과 페이지 유저 조회 실패: {e}")
+
     return templates.TemplateResponse(
         request=request, 
         name="gunghapResult.html",
-        context={"is_logged_in": is_logged_in}
+        # 💡 TopMenu.html에서 인식할 수 있도록 "user" 객체를 전달
+        context={"user": current_user}
     )
-
+    
 # ==========================================
 # 궁합 분석 API (POST /gunghap)
 # ==========================================
