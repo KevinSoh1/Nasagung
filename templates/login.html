@@ -193,7 +193,9 @@
                     <span class="mx-2 text-muted">|</span>계정이 없으신가요? 
                     <a href="/register" class="text-decoration-none text-primary fw-bold ms-1">회원가입</a>
             </div>
-			<!-- ?? JS로 quickMenu.html을 불러와서 div 안에 삽입 
+        </div>
+    </div>
+    <!-- ?? JS로 quickMenu.html을 불러와서 div 안에 삽입 
     			<script>
         			fetch('quickMenu.html')
             		.then(response => response.text())
@@ -202,12 +204,9 @@
             		});
     			</script>
 			-->
-		<!-- 퀵 메뉴가 들어갈 위치 시작
-			<div id="quick-Menu"></div>
-      	퀵 메뉴가 들어갈 위치 끝 -->	
-        {% include 'quckMenu.html' %}
-        </div>
-    </div>
+	<div id="quick-Menu">
+		{% include 'quckMenu.html' %}
+	</div>
     
 </main>
 
