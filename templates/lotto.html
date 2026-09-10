@@ -16,17 +16,48 @@
             --accent-gold: #cfb53b;
             --white: #ffffff;
             --text-muted: #bdc3c7;
-            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-bg: rgba(255, 255, 255, 0.92);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-dark); color: var(--white); overflow-x: hidden; }
 
+        header {
+            background: rgba(10, 17, 40, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed; width: 100%; top: 0; z-index: 1000;
+        }
+        .header-container {
+            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
+        .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
+
+        nav .main-menu { display: flex; list-style: none; }
+        nav .main-menu li { margin: 0 15px; position: relative; }
+        nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
+        nav .main-menu li a:hover { color: var(--accent-gold); }
+
+        .submenu {
+            display: none; position: absolute; top: 100%; left: 0; background: #151e3d;
+            min-width: 150px; border-radius: 5px; padding: 10px 0; list-style: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .submenu li a { padding: 8px 20px; display: block; font-size: 0.85rem; color: var(--white) !important; }
+        .dropdown:hover .submenu { display: block; }
+
+        .auth-buttons { display: flex; }
+        .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; margin-right: 10px; cursor: pointer; }
+        .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        /* register.php / login.php와 완벽하게 동일한 규격으로 매칭 */
         .hero {
-            min-height: 100vh; 
+            min-height: 100vh; /* height에서 min-height로 변경하여 유연성 확보 */
             background: linear-gradient(rgba(10, 17, 40, 0.5), rgba(10, 17, 40, 0.5)), 
                         url('/static/images/background.png') center/cover no-repeat;
-            background-attachment: fixed; 
+            background-attachment: fixed; /* 배경 이미지 왜곡 방지 붙박이 고정 */
             position: relative; 
             display: flex; 
             align-items: center; 
@@ -101,6 +132,13 @@
 
         .btn-submit { background: var(--accent-gold); color: #000; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 10px rgba(207,181,59,0.3); }
         .btn-submit:hover { background: #b89e2b; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(207,181,59,0.4); }
+
+		.quick-menu { flex: 0.8; display: flex; flex-direction: column; gap: 20px; }
+        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .quick-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateX(5px); border-color: var(--accent-gold); }
+        .q-icon { font-size: 2.5rem; }
+        .q-text strong { display: block; font-size: 1.15rem; color: var(--white); margin-bottom: 5px; }
+        .q-text span { font-size: 0.85rem; color: var(--text-muted); }
 
         @keyframes ballPopIn {
             0% { opacity: 0; transform: scale(0) rotate(-180deg); }
