@@ -295,8 +295,9 @@ async def find_id(
     except Exception as e:
         return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
 
+PW_PATTERN = r'^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+]).{5,}$'
 
-# 2) 비밀번호 재설정 링크 발송 요청
+# 1) 비밀번호 재설정 링크 발송 요청
 @router.post("/reset-password-request")
 async def reset_password_request(
     email: str = Form(...),
@@ -305,16 +306,22 @@ async def reset_password_request(
 ):
     try:
         with db.cursor() as cursor:
+            # 회원 정보(이메일, 이름) 일치 여부 확인
             sql = "SELECT email FROM nasagung_users WHERE email = %s AND name = %s"
             cursor.execute(sql, (email.strip(), name.strip()))
             user = cursor.fetchone()
 
             if not user:
-                return JSONResponse({"success": False, "message": "입력하신 정보와 일치하는 계정이 없습니다."})
+                return JSONResponse({
+                    "success": False, 
+                    "message": "입력하신 이메일과 이름이 일치하는 계정을 찾을 수 없습니다."
+                })
 
+            # 재설정 토큰 및 만료시간(30분) 생성
             reset_token = secrets.token_urlsafe(32)
             expires_at = datetime.utcnow() + timedelta(minutes=30)
 
+            # DB에 토큰 및 만료일자 저장
             update_sql = """
                 UPDATE nasagung_users 
                 SET reset_token = %s, reset_token_expires = %s 
@@ -323,17 +330,21 @@ async def reset_password_request(
             cursor.execute(update_sql, (reset_token, expires_at, email.strip()))
             db.commit()
 
-        # 이메일 발송 처리 영역
+        # 비밀번호 재설정 링크 생성 (실제 사용 환경에 맞게 URL 변경)
         reset_link = f"https://nasagung.com/reset-password?token={reset_token}"
-        # send_email(email, reset_link)
+        
+        # TODO: 실제 이메일 발송 함수 호출 영역
+        # send_reset_email(email.strip(), reset_link)
 
-        return JSONResponse({"success": True, "message": "비밀번호 재설정 링크가 이메일로 발송되었습니다."})
+        return JSONResponse({
+            "success": True, 
+            "message": "비밀번호 재설정 링크가 이메일로 발송되었습니다. 메일함을 확인해 주세요."
+        })
 
     except Exception as e:
         return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
 
-
-# 3) 비밀번호 재설정 완료 처리
+# 2) 비밀번호 재설정 실행 (새 비밀번호 검증 및 MD5 암호화)
 @router.post("/reset-password")
 async def reset_password_submit(
     token: str = Form(...),
@@ -342,20 +353,34 @@ async def reset_password_submit(
 ):
     try:
         clean_pw = new_password.strip()
+
+        # 회원가입 시와 동일한 비밀번호 유효성 검사 (영문+숫자+특수문자 5자 이상)
+        if not re.match(PW_PATTERN, clean_pw):
+            return JSONResponse({
+                "success": False, 
+                "message": "비밀번호는 영문, 숫자, 특수문자(!@#$%^&*()_+)를 포함하여 5자 이상이어야 합니다."
+            })
+
+        # 회원가입 시와 동일한 MD5 암호화
         hashed_pw = hashlib.md5(clean_pw.encode('utf-8')).hexdigest()
         now = datetime.utcnow()
 
         with db.cursor() as cursor:
+            # 토큰 존재 여부 및 만료 시간 확인
             sql = """
                 SELECT email FROM nasagung_users 
                 WHERE reset_token = %s AND reset_token_expires > %s
             """
-            cursor.execute(sql, (token, now))
+            cursor.execute(sql, (token.strip(), now))
             user = cursor.fetchone()
 
             if not user:
-                return JSONResponse({"success": False, "message": "유효하지 않거나 만료된 링크입니다."})
+                return JSONResponse({
+                    "success": False, 
+                    "message": "유효하지 않거나 만료된 재설정 링크입니다. 다시 요청해 주세요."
+                })
 
+            # MD5 해시 비밀번호 적용 및 토큰 삭제(초기화)
             update_sql = """
                 UPDATE nasagung_users 
                 SET password = %s, reset_token = NULL, reset_token_expires = NULL 
@@ -364,10 +389,14 @@ async def reset_password_submit(
             cursor.execute(update_sql, (hashed_pw, user["email"]))
             db.commit()
 
-        return JSONResponse({"success": True, "message": "비밀번호가 성공적으로 변경되었습니다. 로그인해 주세요."})
+        return JSONResponse({
+            "success": True, 
+            "message": "비밀번호가 성공적으로 변경되었습니다. 변경된 비밀번호로 로그인해 주세요."
+        })
 
     except Exception as e:
         return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
+
         
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
