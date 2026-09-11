@@ -72,6 +72,15 @@
             max-width: 450px;
             width: 100%;
         }
+
+        /* ?? 퀵메뉴 아이템 레이아웃 */
+        #quick-Menu { flex: 0.8; max-width: 450px; width: 100%; }
+        .quick-menu { display: flex; flex-direction: column; gap: 20px; }
+        .quick-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .quick-item:hover { background: rgba(255, 255, 255, 0.1); transform: translateX(5px); border-color: var(--accent-gold); }
+        .q-icon { font-size: 2.5rem; }
+        .q-text strong { display: block; font-size: 1.15rem; color: var(--white); margin-bottom: 5px; }
+        .q-text span { font-size: 0.85rem; color: var(--text-muted); }
         .header-container {
             max-width: 1200px; margin: 0 auto; padding: 15px 20px;
             display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; white-space: nowrap; width: 100%;
