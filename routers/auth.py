@@ -257,7 +257,10 @@ async def find_id(
         WHERE name = :name AND birthdate = :birthdate 
         LIMIT 1
     """)
-    user = db.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
+    # user = db.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
+    # 💡 db.execute 대신 아래와 같이 수정
+    with db.connect() as conn:
+        user = conn.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
 
     if user:
         # 이메일 마스킹 처리 (선택 사항: 예 - ex***@mail.com)
