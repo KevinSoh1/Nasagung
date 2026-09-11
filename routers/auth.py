@@ -244,118 +244,81 @@ async def get_find_account_page(request: Request):
 # ==========================================
 # ID,Password 찾기 및 재설정하기 백엔드.
 # ==========================================
-# 1) 아이디 찾기 라우트
+# 1) 아이디(이메일) 찾기
 @router.post("/find-id")
 async def find_id(
     name: str = Form(...),
     birthdate: str = Form(...),
-    #db: Session = Depends(get_db)
     db = Depends(get_db)
 ):
-    # nasagung_users 테이블에서 이름과 생년월일로 email 필드 조회
-    query = text("""
-        SELECT email FROM nasagung_users 
-        WHERE name = :name AND birthdate = :birthdate 
-        LIMIT 1
-    """)
-    # user = db.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
-    # 💡 db.execute 대신 아래와 같이 수정
-    with db.connect() as conn:
-        user = conn.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
+    try:
+        with db.cursor() as cursor:
+            # 이름과 생년월일로 사용자 및 이메일 조회
+            sql = "SELECT email FROM nasagung_users WHERE name = %s AND birthdate = %s"
+            cursor.execute(sql, (name.strip(), birthdate.strip()))
+            user = cursor.fetchone()
 
-    if user:
-        # 이메일 마스킹 처리 (선택 사항: 예 - ex***@mail.com)
-        raw_email = user.email
-        email_parts = raw_email.split("@")
-        masked_id = email_parts[0][:2] + "*" * (len(email_parts[0]) - 2) + "@" + email_parts[1]
+        if not user:
+            return JSONResponse({"success": False, "message": "일치하는 회원 정보를 찾을 수 없습니다."})
+
+        raw_email = user["email"]
         
-        return JSONResponse({"success": True, "email": masked_id})
-    else:
-        return JSONResponse({"success": False, "message": "일치하는 회원 정보를 찾을 수 없습니다."})
+        # 이메일 마스킹 처리 (예: ex***@domain.com)
+        email_parts = raw_email.split("@")
+        user_id = email_parts[0]
+        domain = email_parts[1]
+        
+        if len(user_id) <= 2:
+            masked_id = user_id[0] + "*"
+        else:
+            masked_id = user_id[:2] + "*" * (len(user_id) - 2)
+            
+        masked_email = f"{masked_id}@{domain}"
 
-# 3) 비밀번호 재설정 메일 발송 라우트
+        return JSONResponse({"success": True, "email": masked_email})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
+
+
+# 2) 비밀번호 재설정 링크 발송 요청
 @router.post("/reset-password-request")
 async def reset_password_request(
     email: str = Form(...),
     name: str = Form(...),
-    db: Session = Depends(get_db)
+    db = Depends(get_db)
 ):
-    query = text("""
-        SELECT id, email FROM nasagung_users 
-        WHERE email = :email AND name = :name 
-        LIMIT 1
-    """)
-    user = db.execute(query, {"email": email, "name": name}).fetchone()
+    try:
+        with db.cursor() as cursor:
+            # 계정 존재 여부 확인
+            sql = "SELECT email FROM nasagung_users WHERE email = %s AND name = %s"
+            cursor.execute(sql, (email.strip(), name.strip()))
+            user = cursor.fetchone()
 
-    if not user:
-        return JSONResponse({"success": False, "message": "입력하신 계정 정보를 찾을 수 없습니다."})
+            if not user:
+                return JSONResponse({"success": False, "message": "입력하신 정보와 일치하는 계정이 없습니다."})
 
-    # 재설정 토큰 생성 및 토큰 저장 (유효시간 설정 등)
-    reset_token = secrets.token_urlsafe(32)
-    
-    # 예시: DB 토큰 업데이트 쿼리 (필드가 있을 경우)
-    # db.execute(text("UPDATE nasagung_users SET reset_token = :token WHERE email = :email"), {"token": reset_token, "email": email})
-    # db.commit()
+            # 재설정 토큰 및 만료시간(30분) 생성
+            reset_token = secrets.token_urlsafe(32)
+            expires_at = datetime.utcnow() + timedelta(minutes=30)
 
-    reset_link = f"https://nasagung.com/reset-password?token={reset_token}"
+            # DB에 토큰 및 만료시간 저장
+            update_sql = """
+                UPDATE nasagung_users 
+                SET reset_token = %s, reset_token_expires = %s 
+                WHERE email = %s
+            """
+            cursor.execute(update_sql, (reset_token, expires_at, email.strip()))
+            db.commit() # 데이터 변경 적용
 
-    # 메일 발송 로직 (fastapi-mail 또는 smtplib 활용)
-    # send_reset_email(email, reset_link)
+        # 메일 발송 로직 (SMTP 또는 외부 메일 서비스 연동 영역)
+        reset_link = f"https://nasagung.com/reset-password?token={reset_token}"
+        # send_email(email, reset_link)
 
-    return JSONResponse({"success": True, "message": "비밀번호 재설정 메일이 발송되었습니다."})
+        return JSONResponse({"success": True, "message": "비밀번호 재설정 링크가 이메일로 발송되었습니다."})
 
-# ==========================================
-# 패스워드 리셋하는 페이지
-# ==========================================
-# 1) 비밀번호 재설정 페이지 렌더링 (GET)
-@router.get("/reset-password", response_class=HTMLResponse)
-async def reset_password_page(request: Request, token: str, db: Session = Depends(get_db)):
-    # 토큰 유효성 검증 (토큰 존재 여부 및 만료 시간 확인)
-    query = text("""
-        SELECT email FROM nasagung_users 
-        WHERE reset_token = :token AND reset_token_expires > :now 
-        LIMIT 1
-    """)
-    user = db.execute(query, {"token": token, "now": datetime.utcnow()}).fetchone()
-
-    if not user:
-        return HTMLResponse(content="<h3>유효하지 않거나 만료된 링크입니다.</h3>", status_code=400)
-
-    return templates.TemplateResponse("resetPassword.html", {"request": request, "token": token})
-
-
-# 2) 비밀번호 변경 처리 (POST)
-@router.post("/reset-password")
-async def reset_password_submit(
-    token: str = Form(...),
-    new_password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    # 1. 토큰으로 사용자 재확인
-    query = text("""
-        SELECT id FROM nasagung_users 
-        WHERE reset_token = :token AND reset_token_expires > :now 
-        LIMIT 1
-    """)
-    user = db.execute(query, {"token": token, "now": datetime.utcnow()}).fetchone()
-
-    if not user:
-        return JSONResponse({"success": False, "message": "만료되거나 유효하지 않은 요청입니다."}, status_code=400)
-
-    # 2. 비밀번호 암호화 (Bcrypt)
-    hashed_password = pw_context.hash(new_password)
-
-    # 3. DB 비밀번호 업데이트 및 사용된 토큰 초기화
-    update_query = text("""
-        UPDATE nasagung_users 
-        SET password = :password, reset_token = NULL, reset_token_expires = NULL 
-        WHERE id = :user_id
-    """)
-    db.execute(update_query, {"password": hashed_password, "user_id": user.id})
-    db.commit()
-
-    return JSONResponse({"success": True, "message": "비밀번호가 성공적으로 변경되었습니다. 잠시 후 로그인 페이지로 이동합니다."})
-
+    except Exception as e:
+        return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
 # ==========================================
