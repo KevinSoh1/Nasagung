@@ -249,7 +249,8 @@ async def get_find_account_page(request: Request):
 async def find_id(
     name: str = Form(...),
     birthdate: str = Form(...),
-    db: Session = Depends(get_db)
+    #db: Session = Depends(get_db)
+    db = Depends(get_db)
 ):
     # nasagung_users 테이블에서 이름과 생년월일로 email 필드 조회
     query = text("""
