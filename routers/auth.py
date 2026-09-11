@@ -11,7 +11,8 @@ from typing import Optional
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse,JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session, text
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 from passlib.context import CryptContext
 from datetime import datetime
 
