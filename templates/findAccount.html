@@ -27,36 +27,22 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: fixed; width: 100%; top: 0; z-index: 1000;
         }
-        .header-container {
-            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center;
+
+        /* 💡 카드와 퀵메뉴를 나란히 배치하기 위한 Flexbox 레이아웃 */
+        .main-content-layout {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            margin-top: 2rem;
         }
-        .logo { font-family: 'Noto Serif KR', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); }
-        .logo span { color: var(--accent-gold); font-size: 1.2rem; margin-left: 5px; }
-
-        nav .main-menu { display: flex; list-style: none; }
-        nav .main-menu li { margin: 0 15px; position: relative; }
-        nav .main-menu li a { color: var(--white); text-decoration: none; font-size: 0.95rem; transition: 0.3s; }
-        nav .main-menu li a:hover { color: var(--accent-gold); }
-
-        .submenu {
-            display: none; position: absolute; top: 100%; left: 0; background: #151e3d;
-            min-width: 150px; border-radius: 5px; padding: 10px 0; list-style: none;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-        .submenu li a { padding: 8px 20px; display: block; font-size: 0.85rem; color: var(--white) !important; }
-        .dropdown:hover .submenu { display: block; }
-
-        .auth-buttons { display: flex; }
-        .btn-login { background: transparent; border: 1px solid var(--white); color: var(--white); padding: 8px 18px; border-radius: 5px; margin-right: 10px; cursor: pointer; }
-        .btn-signup { background: var(--accent-gold); border: none; color: #000; padding: 8px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        
 
         .find-card {
+            flex: 1;
             max-width: 450px;
             width: 100%;
-            margin: 0 auto;
+            margin: 0;
             padding: 2.5rem 2rem;
             border-radius: 15px;
             border: none;
@@ -80,6 +66,13 @@
             color: #fff;
         }
 
+        /* 퀵메뉴 영역 너비 설정 */
+        #quick-Menu {
+            flex: 0.8;
+            max-width: 450px;
+            width: 100%;
+        }
+
         .hero {
             min-height: 100vh;
             background: linear-gradient(rgba(10, 17, 40, 0.5), rgba(10, 17, 40, 0.5)), 
@@ -94,10 +87,18 @@
         }
 
         .hero-content { position: relative; z-index: 1; max-width: 1100px; width: 100%; margin: 0 auto; padding: 40px 20px; }
-        .intro-text { text-align: center; margin-bottom: 30px; }
+        .intro-text { text-align: center; margin-bottom: 20px; }
         .intro-text h1 { font-family: 'Noto Serif KR', serif; font-size: 2.5rem; line-height: 1.3; margin-bottom: 15px; }
         .intro-text .highlight { color: var(--accent-gold); }
         .intro-text p { color: var(--text-muted); font-size: 1.1rem; }
+
+        @media (max-width: 992px) {
+            .main-content-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            #quick-Menu { max-width: 450px; }
+        }
     </style>
 </head>
 <body>
@@ -111,54 +112,128 @@
             <p>가입 시 등록하신 정보로 계정을 찾을 수 있습니다</p>
         </section>
         
-        <div class="card find-card mt-3">
-            <!-- 💡 아이디 찾기 / 비밀번호 재설정 탭 -->
-            <ul class="nav nav-pills nav-justified mb-4" id="findTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="id-tab" data-bs-toggle="pill" data-bs-target="#find-id" type="button" role="tab">아이디 찾기</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pw-tab" data-bs-toggle="pill" data-bs-target="#reset-pw" type="button" role="tab">비밀번호 재설정</button>
-                </li>
-            </ul>
+        <div class="main-content-layout">
+            <div class="card find-card">
+                <!-- 💡 아이디 찾기 / 비밀번호 재설정 탭 -->
+                <ul class="nav nav-pills nav-justified mb-4" id="findTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="id-tab" data-bs-toggle="pill" data-bs-target="#find-id" type="button" role="tab">아이디 찾기</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pw-tab" data-bs-toggle="pill" data-bs-target="#reset-pw" type="button" role="tab">비밀번호 재설정</button>
+                    </li>
+                </ul>
 
-            <div class="tab-content" id="findTabContent">
-                <!-- 1. 아이디(이메일) 찾기 폼 -->
-                <div class="tab-pane fade show active" id="find-id" role="tabpanel">
-                    <form action="/find-id" method="POST">
-                        <label class="form-label small">이름</label>
-                        <input type="text" name="name" class="form-control mb-2" placeholder="홍길동" required>
-                        
-                        <label class="form-label small">생년월일 (8자리)</label>
-                        <input type="text" name="birthdate" class="form-control mb-3" placeholder="19900101" maxlength="8" required>
-                        
-                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">아이디 찾기</button>
-                    </form>
+                <div class="tab-content" id="findTabContent">
+                    <!-- 1. 아이디(이메일) 찾기 폼 -->
+                    <div class="tab-pane fade show active" id="find-id" role="tabpanel">
+                        <form id="findIdForm">
+                            <label class="form-label small">이름</label>
+                            <input type="text" id="findName" name="name" class="form-control mb-2" placeholder="홍길동" required>
+                            
+                            <label class="form-label small">생년월일 (8자리)</label>
+                            <input type="text" id="findBirthdate" name="birthdate" class="form-control mb-2" placeholder="19900101" maxlength="8" required>
+                            
+                            <!-- 💡 1번 요구사항: 생년월일 밑에 결과를 출력할 영역 -->
+                            <div id="idResultBox" class="alert d-none py-2 px-3 my-2 small" role="alert"></div>
+
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mt-2">아이디 찾기</button>
+                        </form>
+                    </div>
+
+                    <!-- 2. 비밀번호 재설정 폼 -->
+                    <div class="tab-pane fade" id="reset-pw" role="tabpanel">
+                        <form id="resetPwForm">
+                            <label class="form-label small">이메일 (아이디)</label>
+                            <input type="email" id="resetEmail" name="email" class="form-control mb-2" placeholder="example@mail.com" required>
+                            
+                            <label class="form-label small">이름</label>
+                            <input type="text" id="resetName" name="name" class="form-control mb-2" placeholder="홍길동" required>
+                            
+                            <p class="text-muted small mb-2">입력하신 이메일로 비밀번호 재설정 링크가 발송됩니다.</p>
+
+                            <!-- 비밀번호 재설정 요청 결과 출력 영역 -->
+                            <div id="pwResultBox" class="alert d-none py-2 px-3 my-2 small" role="alert"></div>
+
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mt-2">재설정 링크 발송</button>
+                        </form>
+                    </div>
                 </div>
 
-                <!-- 2. 비밀번호 재설정 폼 -->
-                <div class="tab-pane fade" id="reset-pw" role="tabpanel">
-                    <form action="/reset-password-request" method="POST">
-                        <label class="form-label small">이메일 (아이디)</label>
-                        <input type="email" name="email" class="form-control mb-2" placeholder="example@mail.com" required>
-                        
-                        <label class="form-label small">이름</label>
-                        <input type="text" name="name" class="form-control mb-3" placeholder="홍길동" required>
-                        
-                        <p class="text-muted small mb-3">입력하신 이메일로 비밀번호 재설정 링크가 발송됩니다.</p>
-
-                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2">재설정 링크 발송</button>
-                    </form>
+                <div class="text-center mt-4 small">
+                    생각나셨나요? <a href="/login" class="text-decoration-none text-primary fw-bold ms-1">로그인 하러가기</a>
                 </div>
             </div>
 
-            <div class="text-center mt-4 small">
-                생각나셨나요? <a href="/login" class="text-decoration-none text-primary fw-bold ms-1">로그인 하러가기</a>
+            <!-- 💡 폼 바로 옆에 나타나는 퀵메뉴 -->
+            <div id="quick-Menu">
+                {% include 'quckMenu.html' %}
             </div>
         </div>
     </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 1) 아이디 찾기 처리
+    document.getElementById("findIdForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const resultBox = document.getElementById("idResultBox");
+        const name = document.getElementById("findName").value;
+        const birthdate = document.getElementById("findBirthdate").value;
+
+        try {
+            const response = await fetch("/find-id", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ name: name, birthdate: birthdate })
+            });
+            const data = await response.json();
+
+            resultBox.classList.remove("d-none", "alert-success", "alert-danger");
+            if (data.success) {
+                resultBox.classList.add("alert-success");
+                resultBox.innerHTML = `회원님의 아이디(이메일)는 <strong>${data.email}</strong> 입니다.`;
+            } else {
+                resultBox.classList.add("alert-danger");
+                resultBox.innerText = data.message || "일치하는 회원 정보를 찾을 수 없습니다.";
+            }
+        } catch (err) {
+            resultBox.classList.remove("d-none", "alert-success");
+            resultBox.classList.add("alert-danger");
+            resultBox.innerText = "요청 처리 중 오류가 발생했습니다.";
+        }
+    });
+
+    // 3) 비밀번호 재설정 메일 발송 처리
+    document.getElementById("resetPwForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const resultBox = document.getElementById("pwResultBox");
+        const email = document.getElementById("resetEmail").value;
+        const name = document.getElementById("resetName").value;
+
+        try {
+            const response = await fetch("/reset-password-request", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ email: email, name: name })
+            });
+            const data = await response.json();
+
+            resultBox.classList.remove("d-none", "alert-success", "alert-danger");
+            if (data.success) {
+                resultBox.classList.add("alert-success");
+                resultBox.innerText = "비밀번호 재설정 메일이 발송되었습니다. 메일함을 확인해 주세요.";
+            } else {
+                resultBox.classList.add("alert-danger");
+                resultBox.innerText = data.message || "입력한 정보와 일치하는 계정이 없습니다.";
+            }
+        } catch (err) {
+            resultBox.classList.remove("d-none", "alert-success");
+            resultBox.classList.add("alert-danger");
+            resultBox.innerText = "요청 처리 중 오류가 발생했습니다.";
+        }
+    });
+</script>
 </body>
 </html>
