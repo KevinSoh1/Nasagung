@@ -5,16 +5,25 @@ import time
 import uuid
 import logging
 import requests
+import secrets
 
 from typing import Optional
 from fastapi import APIRouter, Request, Form, File, UploadFile, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse,JSONResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session, text
+from passlib.context import CryptContext
+from datetime import datetime
+
 from database import get_db
 
 templates = Jinja2Templates(directory="templates")
-
 router = APIRouter()
+
+# 비밀번호 암호화 컨텍스트 (bcrypt)
+pw_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
 
 # ==========================================
 # 1. 로그인 페이지 화면 띄우기 (GET)
@@ -221,7 +230,7 @@ async def register_page(request: Request):
     return templates.TemplateResponse(request, "register.html")
 
 # ==========================================
-# ID,Password 찾기 및 재설정하기.
+# ID,Password 찾기 및 재설정하기 페이지
 # ==========================================
 @router.get("/findAccount", response_class=HTMLResponse)
 async def get_find_account_page(request: Request):
@@ -230,7 +239,117 @@ async def get_find_account_page(request: Request):
         name="findAccount.html",
         context={}
     )
+
+# ==========================================
+# ID,Password 찾기 및 재설정하기 백엔드.
+# ==========================================
+# 1) 아이디 찾기 라우트
+@router.post("/find-id")
+async def find_id(
+    name: str = Form(...),
+    birthdate: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    # nasagung_users 테이블에서 이름과 생년월일로 email 필드 조회
+    query = text("""
+        SELECT email FROM nasagung_users 
+        WHERE name = :name AND birthdate = :birthdate 
+        LIMIT 1
+    """)
+    user = db.execute(query, {"name": name, "birthdate": birthdate}).fetchone()
+
+    if user:
+        # 이메일 마스킹 처리 (선택 사항: 예 - ex***@mail.com)
+        raw_email = user.email
+        email_parts = raw_email.split("@")
+        masked_id = email_parts[0][:2] + "*" * (len(email_parts[0]) - 2) + "@" + email_parts[1]
+        
+        return JSONResponse({"success": True, "email": masked_id})
+    else:
+        return JSONResponse({"success": False, "message": "일치하는 회원 정보를 찾을 수 없습니다."})
+
+# 3) 비밀번호 재설정 메일 발송 라우트
+@router.post("/reset-password-request")
+async def reset_password_request(
+    email: str = Form(...),
+    name: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    query = text("""
+        SELECT id, email FROM nasagung_users 
+        WHERE email = :email AND name = :name 
+        LIMIT 1
+    """)
+    user = db.execute(query, {"email": email, "name": name}).fetchone()
+
+    if not user:
+        return JSONResponse({"success": False, "message": "입력하신 계정 정보를 찾을 수 없습니다."})
+
+    # 재설정 토큰 생성 및 토큰 저장 (유효시간 설정 등)
+    reset_token = secrets.token_urlsafe(32)
     
+    # 예시: DB 토큰 업데이트 쿼리 (필드가 있을 경우)
+    # db.execute(text("UPDATE nasagung_users SET reset_token = :token WHERE email = :email"), {"token": reset_token, "email": email})
+    # db.commit()
+
+    reset_link = f"https://nasagung.com/reset-password?token={reset_token}"
+
+    # 메일 발송 로직 (fastapi-mail 또는 smtplib 활용)
+    # send_reset_email(email, reset_link)
+
+    return JSONResponse({"success": True, "message": "비밀번호 재설정 메일이 발송되었습니다."})
+
+# ==========================================
+# 패스워드 리셋하는 페이지
+# ==========================================
+# 1) 비밀번호 재설정 페이지 렌더링 (GET)
+@router.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str, db: Session = Depends(get_db)):
+    # 토큰 유효성 검증 (토큰 존재 여부 및 만료 시간 확인)
+    query = text("""
+        SELECT email FROM nasagung_users 
+        WHERE reset_token = :token AND reset_token_expires > :now 
+        LIMIT 1
+    """)
+    user = db.execute(query, {"token": token, "now": datetime.utcnow()}).fetchone()
+
+    if not user:
+        return HTMLResponse(content="<h3>유효하지 않거나 만료된 링크입니다.</h3>", status_code=400)
+
+    return templates.TemplateResponse("resetPassword.html", {"request": request, "token": token})
+
+
+# 2) 비밀번호 변경 처리 (POST)
+@router.post("/reset-password")
+async def reset_password_submit(
+    token: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    # 1. 토큰으로 사용자 재확인
+    query = text("""
+        SELECT id FROM nasagung_users 
+        WHERE reset_token = :token AND reset_token_expires > :now 
+        LIMIT 1
+    """)
+    user = db.execute(query, {"token": token, "now": datetime.utcnow()}).fetchone()
+
+    if not user:
+        return JSONResponse({"success": False, "message": "만료되거나 유효하지 않은 요청입니다."}, status_code=400)
+
+    # 2. 비밀번호 암호화 (Bcrypt)
+    hashed_password = pw_context.hash(new_password)
+
+    # 3. DB 비밀번호 업데이트 및 사용된 토큰 초기화
+    update_query = text("""
+        UPDATE nasagung_users 
+        SET password = :password, reset_token = NULL, reset_token_expires = NULL 
+        WHERE id = :user_id
+    """)
+    db.execute(update_query, {"password": hashed_password, "user_id": user.id})
+    db.commit()
+
+    return JSONResponse({"success": True, "message": "비밀번호가 성공적으로 변경되었습니다. 잠시 후 로그인 페이지로 이동합니다."})
 
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
