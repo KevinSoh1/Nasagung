@@ -8,3 +8,5 @@ python-multipart
 pymysql
 requests
 sqlalchemy
+passlib
+bcrypt
