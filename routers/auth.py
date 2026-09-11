@@ -244,18 +244,32 @@ async def get_find_account_page(request: Request):
 # ==========================================
 # ID,Password 찾기 및 재설정하기 백엔드.
 # ==========================================
-# 1) 아이디(이메일) 찾기
+# 1) 아이디(이메일) 찾기 (birthyear, birthday 필드 반영)
 @router.post("/find-id")
 async def find_id(
     name: str = Form(...),
-    birthdate: str = Form(...),
+    birthdate: str = Form(...),  # 화면에서 '19901021' 8자리 형태로 들어옴
     db = Depends(get_db)
 ):
     try:
+        clean_birth = birthdate.strip()
+
+        # 8자리가 아닐 경우 예외 처리
+        if len(clean_birth) != 8 or not clean_birth.isdigit():
+            return JSONResponse({"success": False, "message": "생년월일 8자리를 정확히 입력해 주세요. (예: 19901021)"})
+
+        # 입력받은 8자리 생년월일 분할
+        # 예: '19901021' -> birth_year: '1990', birth_day: '10-21'
+        birth_year = clean_birth[:4]
+        birth_day = f"{clean_birth[4:6]}-{clean_birth[6:8]}"
+
         with db.cursor() as cursor:
-            # 이름과 생년월일로 사용자 및 이메일 조회
-            sql = "SELECT email FROM nasagung_users WHERE name = %s AND birthdate = %s"
-            cursor.execute(sql, (name.strip(), birthdate.strip()))
+            # birthyear와 birthday 필드로 분리하여 조회
+            sql = """
+                SELECT email FROM nasagung_users 
+                WHERE name = %s AND birthyear = %s AND birthday = %s
+            """
+            cursor.execute(sql, (name.strip(), birth_year, birth_day))
             user = cursor.fetchone()
 
         if not user:
@@ -290,7 +304,6 @@ async def reset_password_request(
 ):
     try:
         with db.cursor() as cursor:
-            # 계정 존재 여부 확인
             sql = "SELECT email FROM nasagung_users WHERE email = %s AND name = %s"
             cursor.execute(sql, (email.strip(), name.strip()))
             user = cursor.fetchone()
@@ -298,20 +311,18 @@ async def reset_password_request(
             if not user:
                 return JSONResponse({"success": False, "message": "입력하신 정보와 일치하는 계정이 없습니다."})
 
-            # 재설정 토큰 및 만료시간(30분) 생성
             reset_token = secrets.token_urlsafe(32)
             expires_at = datetime.utcnow() + timedelta(minutes=30)
 
-            # DB에 토큰 및 만료시간 저장
             update_sql = """
                 UPDATE nasagung_users 
                 SET reset_token = %s, reset_token_expires = %s 
                 WHERE email = %s
             """
             cursor.execute(update_sql, (reset_token, expires_at, email.strip()))
-            db.commit() # 데이터 변경 적용
+            db.commit()
 
-        # 메일 발송 로직 (SMTP 또는 외부 메일 서비스 연동 영역)
+        # 이메일 발송 처리 영역
         reset_link = f"https://nasagung.com/reset-password?token={reset_token}"
         # send_email(email, reset_link)
 
@@ -319,6 +330,44 @@ async def reset_password_request(
 
     except Exception as e:
         return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
+
+
+# 3) 비밀번호 재설정 완료 처리
+@router.post("/reset-password")
+async def reset_password_submit(
+    token: str = Form(...),
+    new_password: str = Form(...),
+    db = Depends(get_db)
+):
+    try:
+        clean_pw = new_password.strip()
+        hashed_pw = hashlib.md5(clean_pw.encode('utf-8')).hexdigest()
+        now = datetime.utcnow()
+
+        with db.cursor() as cursor:
+            sql = """
+                SELECT email FROM nasagung_users 
+                WHERE reset_token = %s AND reset_token_expires > %s
+            """
+            cursor.execute(sql, (token, now))
+            user = cursor.fetchone()
+
+            if not user:
+                return JSONResponse({"success": False, "message": "유효하지 않거나 만료된 링크입니다."})
+
+            update_sql = """
+                UPDATE nasagung_users 
+                SET password = %s, reset_token = NULL, reset_token_expires = NULL 
+                WHERE email = %s
+            """
+            cursor.execute(update_sql, (hashed_pw, user["email"]))
+            db.commit()
+
+        return JSONResponse({"success": True, "message": "비밀번호가 성공적으로 변경되었습니다. 로그인해 주세요."})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "message": f"처리 중 오류 발생: {str(e)}"})
+        
 # ==========================================
 # 5. 회원가입 폼 제출 처리 (POST)
 # ==========================================
